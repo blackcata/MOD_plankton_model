@@ -149,7 +149,7 @@
 !                                                                              !
 !   SUBROUTINE : LPM_pt_tend                                                   !
 !                                                                              !
-!   PURPOSE : Determine the irradiance of each ocena layer                     !
+!   PURPOSE : Determine the temperature tendency by radiation & phytoplankton  !
 !                                                                              !
 !                                                             2019.01.30 K.Noh !
 !                                                                              !
