@@ -28,4 +28,5 @@ mod_particle_attributes.o: \
 	mod_kinds.o
 mod_plankton_model.o: \
 	mod_kinds.o \
+	modules.o   \
 	mod_particle_attributes.o 
