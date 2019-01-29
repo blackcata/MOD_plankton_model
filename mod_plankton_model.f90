@@ -25,7 +25,7 @@
                     particle_advection_start, prt_count
 
             USE arrays_3d,                                                     &
-              ONLY: zu
+              ONLY: zu, s
 
             USE control_parameters,                                            &
               ONLY: simulated_time 
@@ -34,7 +34,7 @@
           
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
             REAL(wp)    ::  time_season_change, time_self_shading
-            REAL(wp)    ::  solar, pt_tend
+            REAL(wp)    ::  solar, pt_tend, s_tend
 
             REAL(wp),DIMENSION(:),ALLOCATABLE   :: radpen, light, CHL
           
@@ -119,8 +119,8 @@
                     !<Calculating the chlorophyll concentration
                     number_of_particles=prt_count(k,j,i)
                     particles => grid_particles(k,j,i)%particles(1:number_of_particles)
-                    tot_vol= SUM( (4.0/3.0)*pi*particles(1:number_of_particles)%radius**3.0 )
-                    tot_vol= tot_vol*1030.0*1.0e6
+                    tot_vol   = SUM( (4.0/3.0)*pi*particles(1:number_of_particles)%radius**3.0 )
+                    tot_vol   = tot_vol*1030.0*1.0e6
 
                     IF (k == nzt) THEN 
                         CHL(k)  =  tot_vol
@@ -181,5 +181,34 @@
             ENDIF
                 
         END SUBROUTINE LPM_pt_tend
+
+!------------------------------------------------------------------------------!
+!                                                                              !
+!   SUBROUTINE : LPM_s_tend                                                    !
+!                                                                              !
+!   PURPOSE : Determine the nutrient tendency by radiation & phytoplankton     !
+!                                                                              !
+!                                                             2019.01.30 K.Noh !
+!                                                                              !
+!------------------------------------------------------------------------------!
+        SUBROUTINE LPM_s_tend(i,j,k)
+            IMPLICIT NONE
+
+            INTEGER(iwp)    :: i, j, k
+            REAL(wp)        :: PHY_CONC, tot_vol, pi = 3.141592654_wp
+            
+            IF (simulated_time > particle_advection_start) THEN
+            !<Calculating the chlorophyll concentration
+                number_of_particles=prt_count(k,j,i)
+                particles => grid_particles(k,j,i)%particles(1:number_of_particles)
+                tot_vol   = SUM( (4.0/3.0)*pi*particles(1:number_of_particles)%radius**3.0 )
+                PHY_CONC  = tot_vol*1030.0
+            ELSE
+                PHY_CONC  = 0.0
+            END IF
+
+            s_tend  =  ( -G1 * s(k,j,i) * light(k) + D1 ) * PHY_CONC
+
+        END SUBROUTINE LPM_s_tend
 
         END MODULE plankton_model
