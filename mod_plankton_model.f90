@@ -66,8 +66,8 @@
             penetration_depth  =     10.0    ! Radiation penetration depth (m)
 
             G1  =  (growth / 86400.0) / 6.2e-5 ! Growth rate in seconds /(N0 or P0)
-            D1  =  (death  / 86400.0)
-            K1  =  (1.0    / penetration_depth) 
+            D1  =  (death  / 86400.0)          ! Death rate in seconds
+            K1  =  (1.0 / penetration_depth)   ! Light attenuation (1/m) 
 
             DO k = nzb, nzt
                 CHL(k)    =  0.0
