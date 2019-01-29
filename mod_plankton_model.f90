@@ -76,4 +76,73 @@
 
         END SUBROUTINE LPM_setup
 
+!------------------------------------------------------------------------------!
+!                                                                              !
+!   SUBROUTINE : LPM_irradiance                                                !
+!                                                                              !
+!   PURPOSE : Determine the irradiance of each ocena layer                     !
+!             Radiation penetration is determined with phytoplankton           !
+!                                                                              !
+!   REFERENCE : Manniza et al., 2005 GRL                                       !
+!                                                                              !
+!                                                             2019.01.30 K.Noh !
+!                                                                              !
+!------------------------------------------------------------------------------!
+        SUBROUTINE LPM_irradiance(i,j)
+            IMPLICIT NONE
+
+            INTEGER(iwp) ::  i, j, k 
+            INTEGER(iwp) ::  L_IR, K_IR, L_VIS, K_VIS, L_R, K_R, L_B, K_B
+            REAL(wp)     ::  count_z, tot_vol, pi= 3.141592654_wp 
+
+            count_z = 0.0
+
+            DO k = nzt,nzb,-1
+
+                count_z = count_z + 1 
+
+                !<Infrared ray effect
+                L_IR = 0.58   !  ( I_IR = I_0 * 0.58  W/m^2) 
+                K_IR = 2.86   !  ( 1/m )
+                
+                IF (simulated_time < time_self_shading ) THEN 
+                !< Self Shading Effect Off
+                    !<Visibile ray effect
+                    L_VIS = 0.42  ! ( I_VIS = I_0 * 0.42 W/m^2 )
+                    K_VIS = 0.044 ! ( 1/m ) 
+                    
+                    radpen(k)  =  L_IR  * exp(zu(k) * K_IR) & 
+                               +  L_VIS * exp(zu(k) * K_VIS)  
+                ELSE 
+                !< Self Shading Effect On    
+
+                    !<Calculating the chlorophyll concentration
+                    number_of_particles=prt_count(k,j,i)
+                    particles => grid_particles(k,j,i)%particles(1:number_of_particles)
+                    tot_vol= SUM( (4.0/3.0)*pi*particles(1:number_of_particles)%radius**3.0 )
+                    tot_vol= tot_vol*1030.0*1.0e6
+
+                    IF (k == nzt) THEN 
+                        CHL(k)  =  tot_vol
+                    ELSE
+                        CHL(k)  = (tot_vol + CHL(k-1)*(count_z-1)) / count_z
+                    END IF
+
+                    !<Red light effect
+                    L_R  =  L_VIS / 2.0  ! 
+                    K_R  =  0.225  +  0.037 * CHL(k) ** 0.629
+
+                    !<Blue light effect
+                    L_B  =  L_VIS / 2.0 
+                    K_B  =  0.0232 +  0.074 * CHL(k) ** 0.674
+
+                    radpen(k)  =  L_IR * exp(zu(k) * K_IR) &
+                               +  L_R  * exp(zu(k) * K_R)  & 
+                               +  L_B  * exp(zu(k) * K_B)  
+                END IF 
+
+            END DO 
+
+        END SUBROUTINE LPM_irradiance
+
         END MODULE plankton_model
