@@ -1402,3 +1402,259 @@
     SAVE
 
  END MODULE indices
+
+!------------------------------------------------------------------------------!
+! Description:
+! ------------
+!> Definition of all arrays defined on the computational grid.
+!------------------------------------------------------------------------------!
+ MODULE arrays_3d
+
+    USE kinds
+
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  c_u_m                  !< mean phase velocity at outflow for u-component used in radiation boundary condition
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  c_u_m_l                !< mean phase velocity at outflow for u-component used in radiation boundary condition (local subdomain value)
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  c_v_m                  !< mean phase velocity at outflow for v-component used in radiation boundary condition
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  c_v_m_l                !< mean phase velocity at outflow for v-component used in radiation boundary condition (local subdomain value)
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  c_w_m                  !< mean phase velocity at outflow for w-component used in radiation boundary condition
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  c_w_m_l                !< mean phase velocity at outflow for w-component used in radiation boundary condition (local subdomain value)
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  ddzu                   !< 1/dzu 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  ddzu_pres              !< modified ddzu for pressure solver 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  dd2zu                  !< 1/(dzu(k)+dzu(k+1)) 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  dzu                    !< vertical grid size (u-grid) 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  ddzw                   !< 1/dzw 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  dzw                    !< vertical grid size (w-grid) 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  hyp                    !< hydrostatic pressure 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  inflow_damping_factor  !< used for turbulent inflow (non-cyclic boundary conditions) 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  ptdf_x                 !< damping factor for potential temperature in x-direction 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  ptdf_y                 !< damping factor for potential temperature in y-direction 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  pt_init                !< initial profile of potential temperature 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  q_init                 !< initial profile of total water mixing ratio 
+                                                                   !< (or total water content with active cloud physics) 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  rdf                    !< rayleigh damping factor for velocity components 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  rdf_sc                 !< rayleigh damping factor for scalar quantities 
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  ref_state              !< reference state of potential temperature 
+                                                                   !< (and density in case of ocean simulation)
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  s_init                 !< initial profile of passive scalar concentration
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  sa_init                !< initial profile of salinity (ocean)
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  ug                     !< geostrophic wind component in x-direction
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  u_init                 !< initial profile of horizontal velocity component u
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  u_stokes_zu            !< u-component of Stokes drift velocity at zu levels
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  u_stokes_zw            !< u-component of Stokes drift velocity at zw levels
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  vg                     !< geostrophic wind component in y-direction
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  v_init                 !< initial profile of horizontal velocity component v
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  v_stokes_zu            !< v-component of Stokes drift velocity at zu levels
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  v_stokes_zw            !< v-component of Stokes drift velocity at zw levels
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  w_subs                 !< subsidence/ascent velocity
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  zu                     !< vertical grid coordinate of u-grid (in m)
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  zw                     !< vertical grid coordinate of w-grid (in m)
+
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  c_u                   !< phase speed of u-velocity component
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  c_v                   !< phase speed of v-velocity component
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  c_w                   !< phase speed of w-velocity component
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_diss           !< artificial numerical dissipation flux at south face of grid box - TKE dissipation
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_e              !< artificial numerical dissipation flux at south face of grid box - subgrid-scale TKE
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_nc             !< artificial numerical dissipation flux at south face of grid box - clouddrop-number concentration    
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_nr             !< artificial numerical dissipation flux at south face of grid box - raindrop-number concentration    
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_pt             !< artificial numerical dissipation flux at south face of grid box - potential temperature 
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_q              !< artificial numerical dissipation flux at south face of grid box - mixing ratio 
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_qc             !< artificial numerical dissipation flux at south face of grid box - cloudwater 
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_qr             !< artificial numerical dissipation flux at south face of grid box - rainwater 
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_s              !< artificial numerical dissipation flux at south face of grid box - passive scalar
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_sa             !< artificial numerical dissipation flux at south face of grid box - salinity
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_u              !< artificial numerical dissipation flux at south face of grid box - u-component
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_v              !< artificial numerical dissipation flux at south face of grid box - v-component
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  diss_s_w              !< artificial numerical dissipation flux at south face of grid box - w-component
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  dzu_mg                !< vertical grid size (u-grid) for multigrid pressure solver
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  dzw_mg                !< vertical grid size (w-grid) for multigrid pressure solver
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_diss           !< 6th-order advective flux at south face of grid box - TKE dissipation
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_e              !< 6th-order advective flux at south face of grid box - subgrid-scale TKE
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_nc             !< 6th-order advective flux at south face of grid box - clouddrop-number concentration 
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_nr             !< 6th-order advective flux at south face of grid box - raindrop-number concentration 
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_pt             !< 6th-order advective flux at south face of grid box - potential temperature 
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_q              !< 6th-order advective flux at south face of grid box - mixing ratio 
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_qc             !< 6th-order advective flux at south face of grid box - cloudwater
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_qr             !< 6th-order advective flux at south face of grid box - rainwater
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_s              !< 6th-order advective flux at south face of grid box - passive scalar
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_sa             !< 6th-order advective flux at south face of grid box - salinity
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_u              !< 6th-order advective flux at south face of grid box - u-component
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_v              !< 6th-order advective flux at south face of grid box - v-component
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  flux_s_w              !< 6th-order advective flux at south face of grid box - w-component
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  f1_mg                 !< grid factor used in right hand side of Gauss-Seidel equation (multigrid)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  f2_mg                 !< grid factor used in right hand side of Gauss-Seidel equation (multigrid)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  f3_mg                 !< grid factor used in right hand side of Gauss-Seidel equation (multigrid)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  mean_inflow_profiles  !< used for turbulent inflow (non-cyclic boundary conditions)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  precipitation_amount  !< precipitation amount due to gravitational settling (bulk microphysics)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  pt_slope_ref          !< potential temperature in rotated coordinate system 
+                                                                    !< (in case of sloped surface) 
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  total_2d_a            !< horizontal array to store the total domain data, used for atmosphere-ocean coupling (atmosphere data)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  total_2d_o            !< horizontal array to store the total domain data, used for atmosphere-ocean coupling (ocean data)
+    
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  d           !< divergence
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  de_dx       !< gradient of sgs tke in x-direction (lpm)
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  de_dy       !< gradient of sgs tke in y-direction (lpm)
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  de_dz       !< gradient of sgs tke in z-direction (lpm)
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_diss !< artificial numerical dissipation flux at left face of grid box - TKE dissipation
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_e    !< artificial numerical dissipation flux at left face of grid box - subgrid-scale TKE
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_nc   !< artificial numerical dissipation flux at left face of grid box - clouddrop-number concentration
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_nr   !< artificial numerical dissipation flux at left face of grid box - raindrop-number concentration
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_pt   !< artificial numerical dissipation flux at left face of grid box - potential temperature
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_q    !< artificial numerical dissipation flux at left face of grid box - mixing ratio
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_qc   !< artificial numerical dissipation flux at left face of grid box - cloudwater
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_qr   !< artificial numerical dissipation flux at left face of grid box - rainwater
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_s    !< artificial numerical dissipation flux at left face of grid box - passive scalar
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_sa   !< artificial numerical dissipation flux at left face of grid box - salinity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_u    !< artificial numerical dissipation flux at left face of grid box - u-component
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_v    !< artificial numerical dissipation flux at left face of grid box - v-component
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  diss_l_w    !< artificial numerical dissipation flux at left face of grid box - w-component
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_diss !< 6th-order advective flux at south face of grid box - TKE dissipation
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_e    !< 6th-order advective flux at south face of grid box - subgrid-scale TKE
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_nc   !< 6th-order advective flux at south face of grid box - clouddrop-number concentration
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_nr   !< 6th-order advective flux at south face of grid box - raindrop-number concentration
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_pt   !< 6th-order advective flux at south face of grid box - potential temperature
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_q    !< 6th-order advective flux at south face of grid box - mixing ratio
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_qc   !< 6th-order advective flux at south face of grid box - cloudwater
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_qr   !< 6th-order advective flux at south face of grid box - rainwater
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_s    !< 6th-order advective flux at south face of grid box - passive scalar
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_sa   !< 6th-order advective flux at south face of grid box - salinity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_u    !< 6th-order advective flux at south face of grid box - u-component
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_v    !< 6th-order advective flux at south face of grid box - v-component
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  flux_l_w    !< 6th-order advective flux at south face of grid box - w-component
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  kh  !< eddy diffusivity for heat 
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  km  !< eddy diffusivity for momentum
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  prr         !< rain rate
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  p_loc       !< local array in multigrid/sor solver containing the pressure which is iteratively advanced in each iteration step
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  tend        !< tendency field (time integration)
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  tric        !< coefficients of the tridiagonal matrix for solution of the Poisson equation in Fourier space
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  u_m_l       !< velocity data (u at left boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  u_m_n       !< velocity data (u at north boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  u_m_r       !< velocity data (u at right boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  u_m_s       !< velocity data (u at south boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  v_m_l       !< velocity data (v at left boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  v_m_n       !< velocity data (v at north boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  v_m_r       !< velocity data (v at right boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  v_m_s       !< velocity data (v at south boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  w_m_l       !< velocity data (w at left boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  w_m_n       !< velocity data (w at north boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  w_m_r       !< velocity data (w at right boundary) from time level t-dt required for radiation boundary condition
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  w_m_s       !< velocity data (w at south boundary) from time level t-dt required for radiation boundary condition
+
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  diss_1  !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  diss_2  !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  diss_3  !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  e_1     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  e_2     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  e_3     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  p       !< pointer: perturbation pressure
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  prho_1  !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  nc_1    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  nc_2    !< pointer for swapping of timelevels for respective quantity 
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  nc_3    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  nr_1    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  nr_2    !< pointer for swapping of timelevels for respective quantity 
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  nr_3    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  pt_1    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  pt_2    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  pt_3    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  q_1     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  q_2     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  q_3     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  qc_1    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  qc_2    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  qc_3    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  ql_v    !< pointer: volume of liquid water
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  ql_vp   !< pointer: liquid water weighting factor
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  ql_1    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  ql_2    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  qr_1    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  qr_2    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  qr_3    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  rho_1   !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  s_1     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  s_2     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  s_3     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  sa_1    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  sa_2    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  sa_3    !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  u_1     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  u_2     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  u_3     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  v_1     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  v_2     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  v_3     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  vpt_1   !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  w_1     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  w_2     !< pointer for swapping of timelevels for respective quantity
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE, TARGET ::  w_3     !< pointer for swapping of timelevels for respective quantity
+
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  diss       !< pointer: TKE dissipation
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  diss_p     !< pointer: prognostic value of TKE dissipation
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  e          !< pointer: subgrid-scale turbulence kinetic energy (sgs tke)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  e_p        !< pointer: prognostic value of sgs tke
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  nc         !< pointer: cloud drop number density
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  nc_p       !< pointer: prognostic value of cloud drop number density
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  nr         !< pointer: rain drop number density
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  nr_p       !< pointer: prognostic value of rain drop number density
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  prho       !< pointer: potential density
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  pt         !< pointer: potential temperature
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  pt_p       !< pointer: prognostic value of potential temperature
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  q          !< pointer: mixing ratio
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  q_p        !< pointer: prognostic value of mixing ratio
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  qc         !< pointer: cloud water content
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  qc_p       !< pointer: cloud water content
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  ql         !< pointer: liquid water content
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  ql_c       !< pointer: change in liquid water content due to
+                                                                   !< condensation/evaporation during last time step
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  qr         !< pointer: rain water content
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  qr_p       !< pointer: prognostic value of rain water content
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  rho_ocean  !< pointer: density of ocean
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  s          !< pointer: passive scalar
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  s_p        !< pointer: prognostic value of passive scalar
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  sa         !< pointer: ocean salinity
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  sa_p       !< pointer: prognostic value of ocean salinity
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tdiss_m    !< pointer: weighted tendency of diss for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  te_m       !< pointer: weighted tendency of e for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tnc_m      !< pointer: weighted tendency of nc for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tnr_m      !< pointer: weighted tendency of nr for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tpt_m      !< pointer: weighted tendency of pt for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tq_m       !< pointer: weighted tendency of q for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tqc_m      !< pointer: weighted tendency of qc for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tqr_m      !< pointer: weighted tendency of qr for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  ts_m       !< pointer: weighted tendency of s for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tsa_m      !< pointer: weighted tendency of sa for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tu_m       !< pointer: weighted tendency of u for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tv_m       !< pointer: weighted tendency of v for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  tw_m       !< pointer: weighted tendency of w for previous sub-timestep (Runge-Kutta)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  u          !< pointer: horizontal velocity component u (x-direction)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  u_p        !< pointer: prognostic value of u
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  v          !< pointer: horizontal velocity component v (y-direction)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  v_p        !< pointer: prognostic value of v
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  vpt        !< pointer: virtual potential temperature
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  w          !< pointer: vertical velocity component w (z-direction)
+    REAL(wp), DIMENSION(:,:,:), POINTER, CONTIGUOUS ::  w_p        !< pointer: prognostic value of w
+
+    REAL(wp), DIMENSION(:,:,:,:), ALLOCATABLE ::  tri    !<  array to hold the tridiagonal matrix for solution of the Poisson equation in Fourier space (4th dimension for threads)
+
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  rho_air      !< air density profile on the uv grid
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  rho_air_zw   !< air density profile on the w grid
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  drho_air     !< inverse air density profile on the uv grid
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  drho_air_zw  !< inverse air density profile on the w grid
+
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  rho_air_mg     !< air density profiles on the uv grid for multigrid
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  rho_air_zw_mg  !< air density profiles on the w grid for multigrid
+
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  heatflux_input_conversion       !< conversion factor array for heatflux input
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  waterflux_input_conversion      !< conversion factor array for waterflux input
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  momentumflux_input_conversion   !< conversion factor array for momentumflux input
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  heatflux_output_conversion      !< conversion factor array for heatflux output
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  waterflux_output_conversion     !< conversion factor array for waterflux output
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  momentumflux_output_conversion  !< conversion factor array for momentumflux output
+
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  hyrho   !< density of air calculated with hydrostatic pressure
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  exner   !< ratio of actual and potential temperature
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  d_exner !< ratio of potential and actual temperature
+
+    SAVE
+
+ END MODULE arrays_3d
+
