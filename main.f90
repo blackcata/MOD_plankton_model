@@ -1,26 +1,18 @@
 !------------------------------------------------------------------------------!
 !                                                                              !
-!   PROGRAM : mod_plankton_model.f90                                           !
+!   PROGRAM : main.f90                                                         !
 !                                                                              !
-!   PURPOSE : Module for Lagrangian plankton model                             !
+!   PURPOSE : Module for the Lagrangian Plankton Model                         !
 !                                                                              !
 !                                                             2019.01.30 K.Noh !
 !                                                                              !
 !------------------------------------------------------------------------------!
 
 
-        MODULE plankton_model
-          
+        PROGRAM main
           USE kinds
-          USE pegrid
-          USE particle_attributes
-          USE control_parameters,                                              &
-            ONLY: simulated_time 
+          USE plankton_model 
 
           IMPLICIT NONE
 
-          SAVE
-
-        CONTAINS
-        
-        END MODULE plankton_model
+        END PROGRAM main
