@@ -1314,3 +1314,91 @@
     SAVE
 
  END MODULE control_parameters
+
+!------------------------------------------------------------------------------!
+! Description:
+! ------------
+!> Definition of array bounds, number of gridpoints, and wall flag arrays.
+!------------------------------------------------------------------------------!
+ MODULE indices
+
+    USE kinds
+
+    INTEGER(iwp) ::  nbgp = 3       !< number of boundary ghost points
+    INTEGER(iwp) ::  ngp_sums       !< number of vertical profile grid points time number of output profiles - used for allreduce statements in MPI calls
+    INTEGER(iwp) ::  ngp_sums_ls    !< number of vertical profile grid points time number of large-scale forcing profiles - used for allreduce statements in MPI calls
+    INTEGER(iwp) ::  nnx            !< number of subdomain grid points in x-direction
+    INTEGER(iwp) ::  nx = 0         !< nx+1 = total number of grid points in x-direction
+    INTEGER(iwp) ::  nx_a           !< in coupled atmosphere-ocean runs: total number of grid points along x (atmosphere)
+    INTEGER(iwp) ::  nx_o           !< in coupled atmosphere-ocean runs: total number of grid points along x (ocean)
+    INTEGER(iwp) ::  nxl            !< left-most grid index of subdomain (excluding ghost points)
+    INTEGER(iwp) ::  nxlg           !< left-most grid index of subdomain (including ghost points)
+    INTEGER(iwp) ::  nxlu           !< =nxl+1 (at left domain boundary with inflow from left), else =nxl (used for u-velocity component)
+    INTEGER(iwp) ::  nxr            !< right-most grid index of subdomain (excluding ghost points)
+    INTEGER(iwp) ::  nxrg           !< right-most grid index of subdomain (including ghost points)
+    INTEGER(iwp) ::  nx_on_file     !< nx of previous run in job chain
+    INTEGER(iwp) ::  nny            !< number of subdomain grid points in y-direction
+    INTEGER(iwp) ::  ny = 0         !< ny+1 = total number of grid points in y-direction
+    INTEGER(iwp) ::  ny_a           !< in coupled atmosphere-ocean runs: total number of grid points along y (atmosphere)
+    INTEGER(iwp) ::  ny_o           !< in coupled atmosphere-ocean runs: total number of grid points along y (ocean)
+    INTEGER(iwp) ::  nyn            !< north-most grid index of subdomain (excluding ghost points)
+    INTEGER(iwp) ::  nyng           !< north-most grid index of subdomain (including ghost points)
+    INTEGER(iwp) ::  nys            !< south-most grid index of subdomain (excluding ghost points)
+    INTEGER(iwp) ::  nysg           !< south-most grid index of subdomain (including ghost points)
+    INTEGER(iwp) ::  nysv           !< =nys+1 (at south domain boundary with inflow from south), else =nys (used for v-velocity component)
+    INTEGER(iwp) ::  ny_on_file     !< ny of previous run in job chain
+    INTEGER(iwp) ::  nnz            !< number of subdomain grid points in z-direction
+    INTEGER(iwp) ::  nz = 0         !< total number of grid points in z-direction
+    INTEGER(iwp) ::  nzb            !< bottom grid index of computational domain
+    INTEGER(iwp) ::  nzb_diff       !< will be removed
+    INTEGER(iwp) ::  nzb_max        !< vertical index of topography top
+    INTEGER(iwp) ::  nzt            !< nzt+1 = top grid index of computational domain
+    INTEGER(iwp) ::  topo_min_level !< minimum topography-top index (usually equal to nzb)
+
+    INTEGER(idp), DIMENSION(:), ALLOCATABLE ::  ngp_3d        !< number of grid points of the total domain
+    INTEGER(idp), DIMENSION(:), ALLOCATABLE ::  ngp_3d_inner  !< ! need to have 64 bit for grids > 2E9
+                    
+    INTEGER(iwp), DIMENSION(:), ALLOCATABLE ::  ngp_2dh  !< number of grid points of a horizontal cross section through the total domain
+    INTEGER(iwp), DIMENSION(:), ALLOCATABLE ::  nxl_mg   !< left-most grid index of subdomain on different multigrid level
+    INTEGER(iwp), DIMENSION(:), ALLOCATABLE ::  nxr_mg   !< right-most grid index of subdomain on different multigrid level
+    INTEGER(iwp), DIMENSION(:), ALLOCATABLE ::  nyn_mg   !< north-most grid index of subdomain on different multigrid level
+    INTEGER(iwp), DIMENSION(:), ALLOCATABLE ::  nys_mg   !< south-most grid index of subdomain on different multigrid level
+    INTEGER(iwp), DIMENSION(:), ALLOCATABLE ::  nzt_mg   !< top-most grid index of subdomain on different multigrid level
+
+
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  ngp_2dh_outer     !< number of horizontal grid points which are non-topography and non-surface-bounded
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  ngp_2dh_s_inner   !< number of horizontal grid points which are non-topography
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  mg_loc_ind        !< internal array to store index bounds of all PEs of that multigrid level where data is collected to PE0
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_diff_s_inner  !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_diff_s_outer  !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_inner         !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_outer         !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_s_inner       !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_s_outer       !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_u_inner       !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_u_outer       !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_v_inner       !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_v_outer       !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_w_inner       !< will be removed
+    INTEGER(iwp), DIMENSION(:,:), ALLOCATABLE ::  nzb_w_outer       !< will be removed
+
+    INTEGER(iwp), DIMENSION(:,:,:), POINTER ::  flags  !< pointer to wall_flags_1-10
+
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE,  TARGET ::  wall_flags_1   !< topograpyh masking flag on multigrid level 1 
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE,  TARGET ::  wall_flags_2   !< topograpyh masking flag on multigrid level 2 
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE,  TARGET ::  wall_flags_3   !< topograpyh masking flag on multigrid level 3 
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE,  TARGET ::  wall_flags_4   !< topograpyh masking flag on multigrid level 4 
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE,  TARGET ::  wall_flags_5   !< topograpyh masking flag on multigrid level 5 
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE,  TARGET ::  wall_flags_6   !< topograpyh masking flag on multigrid level 6 
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE,  TARGET ::  wall_flags_7   !< topograpyh masking flag on multigrid level 7 
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE,  TARGET ::  wall_flags_8   !< topograpyh masking flag on multigrid level 8 
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE,  TARGET ::  wall_flags_9   !< topograpyh masking flag on multigrid level 9 
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE,  TARGET ::  wall_flags_10  !< topograpyh masking flag on multigrid level 10 
+
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE ::  advc_flags_1            !< flags used to degrade order of advection scheme
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE ::  advc_flags_2            !< flags used to degrade order of advection scheme
+    INTEGER(iwp), DIMENSION(:,:,:), ALLOCATABLE ::  wall_flags_0            !< flags to mask topography and surface-bounded grid points
+
+    SAVE
+
+ END MODULE indices
