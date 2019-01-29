@@ -1,4 +1,4 @@
-# Particle Tracking Module
+# Lagrangian Plankton Model 
 This module is purposed to attach the NP model to the PALM code. 
 This code is easily operated with the user codes in the PALM. 
 Following the below process will make each particle's trajectories at the specific folder. 
