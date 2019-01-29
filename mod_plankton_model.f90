@@ -28,7 +28,7 @@
               ONLY: zu, s
 
             USE control_parameters,                                            &
-              ONLY: simulated_time 
+              ONLY: simulated_time, dt_3d
 
             IMPLICIT NONE
           
@@ -211,4 +211,53 @@
 
         END SUBROUTINE LPM_s_tend
 
+!------------------------------------------------------------------------------!
+!                                                                              !
+!   SUBROUTINE : LPM_phy_tend                                                  !
+!                                                                              !
+!   PURPOSE : Determine the phytoplankton particle tendency                    !
+!                      by the nutrient and the radiation                       !
+!                                                             2019.01.30 K.Noh !
+!                                                                              !
+!------------------------------------------------------------------------------!
+
+          SUBROUTINE LPM_phy_tend(ip,jp,kp)
+             IMPLICIT NONE
+ 
+             INTEGER(iwp) :: ip  !< index of particle grid box, x-direction
+             INTEGER(iwp) :: jp  !< index of particle grid box, y-direction
+             INTEGER(iwp) :: kp  !< index of particle grid box, z-direction
+             INTEGER(iwp) ::  n  !< particle index
+             INTEGER(iwp) ::  nb !< index of sub-box particles are sorted in
+             INTEGER(iwp) ::  pn !< the number of particles want to track
+
+             INTEGER(iwp), DIMENSION(0:7)  ::  start_index !< start particle index for current sub-box
+             INTEGER(iwp), DIMENSION(0:7)  ::  end_index   !< start particle index for current sub-box
+
+             REAL(wp)     :: net_growth !< parameters for plankton growth
+
+             number_of_particles = prt_count(kp,jp,ip)
+             particles => grid_particles(kp,jp,ip)%particles(1:number_of_particles)
+
+             start_index = grid_particles(kp,jp,ip)%start_index
+             end_index   = grid_particles(kp,jp,ip)%end_index
+
+             DO  nb = 0, 7
+                DO  n = start_index(nb), end_index(nb)
+
+                    IF (solar > 0.0) THEN 
+                        net_growth  =  G1 * s(kp,jp,ip) * light(kp) - D1
+                    ELSE 
+                        net_growth  =  0.0
+                    END IF 
+                    
+                    IF (simulated_time > particle_advection_start) THEN 
+                        particles(n)%radius=particles(n)%radius*               &
+                                            (1.0 + dt_3d*net_growth)**(1.0/3.0)
+                    END IF
+
+                ENDDO
+             ENDDO
+
+          END SUBROUTINE LPM_phy_tend
         END MODULE plankton_model
