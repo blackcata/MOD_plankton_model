@@ -34,7 +34,7 @@
           
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
             REAL(wp)    ::  time_season_change, time_self_shading
-            REAL(wp)    ::  solar 
+            REAL(wp)    ::  solar, pt_tend
 
             REAL(wp),DIMENSION(:),ALLOCATABLE   :: radpen, light, CHL
           
@@ -144,5 +144,42 @@
             END DO 
 
         END SUBROUTINE LPM_irradiance
+
+!------------------------------------------------------------------------------!
+!                                                                              !
+!   SUBROUTINE : LPM_pt_tend                                                   !
+!                                                                              !
+!   PURPOSE : Determine the irradiance of each ocena layer                     !
+!                                                                              !
+!                                                             2019.01.30 K.Noh !
+!                                                                              !
+!------------------------------------------------------------------------------!
+        SUBROUTINE LPM_pt_tend(k)
+            IMPLICIT NONE
+
+            INTEGER(iwp)    :: k
+            REAL(wp)        :: pi = 3.141592654_wp
+
+            !<400W/m2 * max(0, sin(2 pi T) + 0.25)
+            solar = 0.96e-4_wp *                                               &
+                  max(0.0,sin(2.0_wp*pi*simulated_time/86400.0_wp) + 0.25_wp)
+
+            IF (k == nzt) THEN 
+                IF (simulated_time < time_season_change) THEN 
+                !<COOLING daily average 81 W/m2 (WINTER)
+                    pt_tend  =  - 0.63e-4_wp*radpen(k)                         &
+                                + solar * (radpen(k) - radpen(k-1))
+                ELSE
+                !<HEATING daily average 81 W/m2 (SUMMER)
+                    pt_tend  =  - 0.24e-4_wp*radpen(k)                         &
+                                + solar * (radpen(k) - radpen(k-1))
+                END IF
+            ELSEIF (k == nzt) THEN 
+                pt_tend  =  solar * (radpen(k+1) - radpen(k))
+            ELSE
+                pt_tend  =  solar * 0.5 * (radpen(k+1) - radpen(k-1))
+            ENDIF
+                
+        END SUBROUTINE LPM_pt_tend
 
         END MODULE plankton_model
