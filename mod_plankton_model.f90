@@ -59,9 +59,11 @@
             ALLOCATE( radpen(nzb:nzt) )
             ALLOCATE( CHL(nzb:nzt) )
 
-            growth             =  2.0   ! Plankton max growth rate (1/day)
-            death              =  0.1   ! Plankton death rate      (1/day)
-            penetration_depth  = 10.0   ! Radiation penetration depth (m)
+            time_season_change = 172800.0    ! The time when sesason changes 
+            time_self_shading  = 180000000.0 ! The time when self shading active
+            growth             =      2.0    ! Plankton max growth rate (1/day)
+            death              =      0.1    ! Plankton death rate      (1/day)
+            penetration_depth  =     10.0    ! Radiation penetration depth (m)
 
             G1  =  (growth / 86400.0) / 6.2e-5 ! Growth rate in seconds /(N0 or P0)
             D1  =  (death  / 86400.0)
