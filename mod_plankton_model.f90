@@ -245,7 +245,7 @@
 
              DO  nb = 0, 7
                 DO  n = start_index(nb), end_index(nb)
-
+                !<Phytosynthesis is only active when the radiation is available
                     IF (solar > 0.0) THEN 
                         net_growth  =  G1 * s(kp,jp,ip) * light(kp) - D1
                     ELSE 
