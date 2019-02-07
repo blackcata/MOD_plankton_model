@@ -108,8 +108,8 @@
                 IF (simulated_time < time_self_shading ) THEN 
                 !< Self Shading Effect Off
                     !<Visibile ray effect
-                    L_VIS = 0.42  ! ( I_VIS = I_0 * 0.42 W/m^2 )
-                    K_VIS = 0.044 ! ( 1/m ) 
+                    L_VIS = 0.42   ! ( I_VIS = I_0 * 0.42 W/m^2 )
+                    K_VIS = 0.0434 ! ( 1/m ) 
                     
                     radpen(k)  =  L_IR  * exp(zu(k) * K_IR) & 
                                +  L_VIS * exp(zu(k) * K_VIS)  
