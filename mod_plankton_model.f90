@@ -71,6 +71,7 @@
 
             DO k = nzb, nzt
                 CHL(k)    =  0.0
+                radpen(k) =  0.0
                 light(k)  =  exp(K1 * zu(k))
             END DO
 
@@ -92,7 +93,7 @@
             IMPLICIT NONE
 
             INTEGER(iwp) ::  i, j, k 
-            INTEGER(iwp) ::  L_IR, K_IR, L_VIS, K_VIS, L_R, K_R, L_B, K_B
+            REAL(wp) ::  L_IR, K_IR, L_VIS, K_VIS, L_R, K_R, L_B, K_B
             REAL(wp)     ::  count_z, tot_vol, pi= 3.141592654_wp 
 
             count_z = 0.0
