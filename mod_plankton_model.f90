@@ -79,13 +79,15 @@
                 light(k)  =  exp(K1 * zu(k))
             END DO
 
+            IF ( .NOT. dirunal_variation ) growth  =  growth / 2.0_wp
+
         END SUBROUTINE LPM_setup
 
 !------------------------------------------------------------------------------!
 !                                                                              !
 !   SUBROUTINE : LPM_irradiance                                                !
 !                                                                              !
-!   PURPOSE : Determine the irradiance of each ocena layer                     !
+!   PURPOSE : Determine the irradiance of each ocean layer                     !
 !             Radiation penetration is determined with phytoplankton           !
 !                                                                              !
 !   REFERENCE : Manniza et al., 2005 GRL                                       !
@@ -165,10 +167,16 @@
             INTEGER(iwp)    :: k
             REAL(wp)        :: pi = 3.141592654_wp
 
-            !<400W/m2 * max(0, sin(2 pi T) + 0.25)
-            solar = 0.96e-4_wp *                                               &
-                  max(0.0,sin(2.0_wp*pi*simulated_time/86400.0_wp) + 0.25_wp)
+            !<Dirunal variation setup
+            IF ( dirunal_variation ) THEN 
+                !<400W/m2 * max(0, sin(2 pi T) + 0.25)
+                solar = 0.96e-4_wp *                                            &
+                     max(0.0,sin(2.0_wp*pi*simulated_time/86400.0_wp) + 0.25_wp)
+            ELSE 
+                solar = 0.96e-4_wp 
+            END IF 
 
+            !<Calculate the potential temperature tendency with radiation fluxes
             IF (k == nzt) THEN 
                 IF (simulated_time < time_season_change) THEN 
                 !<COOLING daily average 81 W/m2 (WINTER)
@@ -202,17 +210,23 @@
             INTEGER(iwp)    :: i, j, k
             REAL(wp)        :: PHY_CONC, tot_vol, pi = 3.141592654_wp
             
-            IF (simulated_time > particle_advection_start) THEN
-            !<Calculating the chlorophyll concentration
-                number_of_particles=prt_count(k,j,i)
-                particles => grid_particles(k,j,i)%particles(1:number_of_particles)
-                tot_vol   = SUM( (4.0/3.0)*pi*particles(1:number_of_particles)%radius**3.0 )
-                PHY_CONC  = tot_vol*1030.0
+            IF ( nutrient_interaction ) THEN 
+
+                IF (simulated_time > particle_advection_start) THEN
+                !<Calculating the chlorophyll concentration
+                    number_of_particles=prt_count(k,j,i)
+                    particles => grid_particles(k,j,i)%particles(1:number_of_particles)
+                    tot_vol   = SUM( (4.0/3.0)*pi*particles(1:number_of_particles)%radius**3.0 )
+                    PHY_CONC  = tot_vol*1030.0
+                ELSE
+                    PHY_CONC  = 0.0
+                END IF
+
+                s_tend  =  ( -G1 * s(k,j,i) * light(k) + D1 ) * PHY_CONC
             ELSE
-                PHY_CONC  = 0.0
+                s_tend  =  0.0
             END IF
 
-            s_tend  =  ( -G1 * s(k,j,i) * light(k) + D1 ) * PHY_CONC
 
         END SUBROUTINE LPM_s_tend
 
