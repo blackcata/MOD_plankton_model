@@ -32,6 +32,7 @@
 
             IMPLICIT NONE
           
+            LOGICAL     ::  nutrient_interaction, dirunal_variation
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
             REAL(wp)    ::  time_season_change, time_self_shading
             REAL(wp)    ::  solar, pt_tend, s_tend
@@ -59,9 +60,12 @@
             ALLOCATE( radpen(nzb:nzt) )
             ALLOCATE( CHL(nzb:nzt) )
 
+            nutrient_interaction  =  .TRUE.
+            dirunal_variation     =  .TRUE.
+
             time_season_change = 172800.0    ! The time when sesason changes 
             time_self_shading  = 180000000.0 ! The time when self shading active
-            growth             =      2.0    ! Plankton max growth rate (1/day)
+            growth             =      1.0    ! Plankton max growth rate (1/day)
             death              =      0.1    ! Plankton death rate      (1/day)
             penetration_depth  =     10.0    ! Radiation penetration depth (m)
 
