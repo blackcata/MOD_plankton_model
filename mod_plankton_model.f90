@@ -28,11 +28,12 @@
               ONLY: zu, s
 
             USE control_parameters,                                            &
-              ONLY: simulated_time, dt_3d
+              ONLY: simulated_time, dt_3d, rho_surface
 
             IMPLICIT NONE
           
             LOGICAL     ::  nutrient_interaction, dirunal_variation
+            REAL(wp)    ::  cpw, Q0_heat, Q0_cool
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
             REAL(wp)    ::  time_season_change, time_self_shading
             REAL(wp)    ::  solar, pt_tend, s_tend
@@ -62,6 +63,11 @@
 
             nutrient_interaction  =  .TRUE.
             dirunal_variation     =  .TRUE.
+
+            cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
+
+            Q0_heat  =  400  ! Surface heating buoyancy flux (W/m^2)
+            Q0_cool  =  100  ! Surface cooling buoyancy flux (W/m^2)
 
             time_season_change = 172800.0    ! The time when sesason changes 
             time_self_shading  = 180000000.0 ! The time when self shading active
@@ -165,27 +171,31 @@
             IMPLICIT NONE
 
             INTEGER(iwp)    :: k
-            REAL(wp)        :: pi = 3.141592654_wp
+            REAL(wp)        :: pi = 3.141592654_wp, ratio, cooling
+
+            ratio  =  Q0_cool / Q0_heat
 
             !<Dirunal variation setup
             IF ( dirunal_variation ) THEN 
                 !<400W/m2 * max(0, sin(2 pi T) + 0.25)
-                solar = 0.96e-4_wp *                                            &
-                     max(0.0,sin(2.0_wp*pi*simulated_time/86400.0_wp) + 0.25_wp)
+                solar = Q0_heat / (cpw * rho_surface) *                         &
+                     max(0.0,sin(2.0_wp*pi*simulated_time/86400.0_wp) + ratio)
             ELSE 
-                solar = 0.96e-4_wp 
+                solar  =  Q0_heat / (cpw * rho_surface)
             END IF 
 
             !<Calculate the potential temperature tendency with radiation fluxes
             IF (k == nzt) THEN 
                 IF (simulated_time < time_season_change) THEN 
                 !<COOLING daily average 81 W/m2 (WINTER)
-                    pt_tend  =  - 0.63e-4_wp*radpen(k)                         &
-                                + solar * (radpen(k) - radpen(k-1))
+                    cooling  =  2.625 * Q0_cool / (cpw * rho_surface)
+                    pt_tend  =  - cooling * radpen(k)                         &
+                                + solar   * (radpen(k) - radpen(k-1))
                 ELSE
                 !<HEATING daily average 81 W/m2 (SUMMER)
-                    pt_tend  =  - 0.24e-4_wp*radpen(k)                         &
-                                + solar * (radpen(k) - radpen(k-1))
+                    cooling  =   Q0_cool / (cpw * rho_surface)
+                    pt_tend  =  - cooling * radpen(k)                           &
+                                + solar   * (radpen(k) - radpen(k-1))
                 END IF
             ELSEIF (k == nzt) THEN 
                 pt_tend  =  solar * (radpen(k+1) - radpen(k))
