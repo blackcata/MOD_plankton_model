@@ -25,7 +25,7 @@
                     particle_advection_start, prt_count
 
             USE arrays_3d,                                                     &
-              ONLY: zu, s
+              ONLY: zu, s, ddzw
 
             USE control_parameters,                                            &
               ONLY: simulated_time, dt_3d, rho_surface
@@ -33,7 +33,8 @@
             IMPLICIT NONE
           
             LOGICAL     ::  nutrient_interaction, dirunal_variation
-            REAL(wp)    ::  cpw, Q0_heat, Q0_cool
+            REAL(wp)    ::  cpw, Q0_heat, Q0_shift
+            REAL(wp)    ::  Q0_cool_summer, Q0_cool_winter
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
             REAL(wp)    ::  time_season_change, time_self_shading
             REAL(wp)    ::  solar, pt_tend, s_tend
@@ -66,8 +67,10 @@
 
             cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
 
-            Q0_heat  =  400  ! Surface heating buoyancy flux (W/m^2)
-            Q0_cool  =  100  ! Surface cooling buoyancy flux (W/m^2)
+            Q0_heat         =  400    ! Surface heating buoyancy flux (W/m^2)
+            Q0_cool_summer  =  100    ! Surface cooling buoyancy flux (W/m^2)
+            Q0_cool_winter  =  263    ! Surface cooling buoyancy flux (W/m^2)
+            Q0_shift        =  162.36 ! Surface buoyancy flux shift (W/m^2)
 
             time_season_change = 172800.0    ! The time when sesason changes 
             time_self_shading  = 180000000.0 ! The time when self shading active
@@ -171,36 +174,33 @@
             IMPLICIT NONE
 
             INTEGER(iwp)    :: k
-            REAL(wp)        :: pi = 3.141592654_wp, ratio, cooling
-
-            ratio  =  Q0_cool / Q0_heat
+            REAL(wp)        :: pi = 3.141592654_wp, cooling, heating
 
             !<Dirunal variation setup
             IF ( dirunal_variation ) THEN 
-                !<400W/m2 * max(0, sin(2 pi T) + 0.25)
-                solar = Q0_heat / (cpw * rho_surface) *                         &
-                     max(0.0,sin(2.0_wp*pi*simulated_time/86400.0_wp) + ratio)
+                !<COOLING daily average -81 W/m2 (WINTER)
+                IF ( simulated_time < time_season_change ) THEN 
+                    cooling  =  - Q0_cool_winter
+                    heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)&
+                                - Q0_shift
+                !<HEATING daily average +81 W/m2 (SUMMER)
+                ELSE
+                    cooling  =  - Q0_cool_summer
+                    heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)
+                END IF
+
+                solar    =  max(heating, cooling) / (cpw * rho_surface)
             ELSE 
                 solar  =  Q0_heat / (cpw * rho_surface)
             END IF 
 
             !<Calculate the potential temperature tendency with radiation fluxes
             IF (k == nzt) THEN 
-                IF (simulated_time < time_season_change) THEN 
-                !<COOLING daily average 81 W/m2 (WINTER)
-                    cooling  =  2.625 * Q0_cool / (cpw * rho_surface)
-                    pt_tend  =  - cooling * radpen(k)                         &
-                                + solar   * (radpen(k) - radpen(k-1))
-                ELSE
-                !<HEATING daily average 81 W/m2 (SUMMER)
-                    cooling  =   Q0_cool / (cpw * rho_surface)
-                    pt_tend  =  - cooling * radpen(k)                           &
-                                + solar   * (radpen(k) - radpen(k-1))
-                END IF
+                pt_tend  =  solar * (radpen(k) - radpen(k-1)) * ddzw(k)
             ELSEIF (k == nzt) THEN 
-                pt_tend  =  solar * (radpen(k+1) - radpen(k))
+                pt_tend  =  solar * (radpen(k+1) - radpen(k)) * ddzw(k)
             ELSE
-                pt_tend  =  solar * 0.5 * (radpen(k+1) - radpen(k-1))
+                pt_tend  =  solar * 0.5 * (radpen(k+1) - radpen(k-1)) * ddzw(k)
             ENDIF
                 
         END SUBROUTINE LPM_pt_tend
