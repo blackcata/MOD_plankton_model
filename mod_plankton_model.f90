@@ -279,7 +279,7 @@
                     IF (solar > 0.0) THEN 
                         net_growth  =  G1 * s(kp,jp,ip) * light(kp) - D1
                     ELSE 
-                        net_growth  =  0.0
+                        net_growth  =  - D1
                     END IF 
                     
                     IF (simulated_time > particle_advection_start) THEN 
