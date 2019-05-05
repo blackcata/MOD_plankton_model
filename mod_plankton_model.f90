@@ -25,7 +25,7 @@
                     particle_advection_start, prt_count
 
             USE arrays_3d,                                                     &
-              ONLY: zu, s, ddzw
+              ONLY:  s, ddzw, zw
 
             USE control_parameters,                                            &
               ONLY: simulated_time, dt_3d, rho_surface
@@ -62,7 +62,7 @@
             ALLOCATE( radpen(nzb:nzt) )
             ALLOCATE( CHL(nzb:nzt) )
 
-            nutrient_interaction  =  .TRUE.
+            nutrient_interaction  =  .FALSE.
             dirunal_variation     =  .TRUE.
 
             cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
@@ -70,9 +70,10 @@
             Q0_heat         =  400    ! Surface heating buoyancy flux (W/m^2)
             Q0_cool_summer  =  100    ! Surface cooling buoyancy flux (W/m^2)
             Q0_cool_winter  =  263    ! Surface cooling buoyancy flux (W/m^2)
-            Q0_shift        =  162.36 ! Surface buoyancy flux shift (W/m^2)
+            Q0_shift        =  163    ! Surface buoyancy flux shift (W/m^2)
 
             time_season_change = 172800.0    ! The time when sesason changes 
+            !time_season_change = 0.0    ! The time when sesason changes 
             time_self_shading  = 180000000.0 ! The time when self shading active
             growth             =      1.0    ! Plankton max growth rate (1/day)
             death              =      0.1    ! Plankton death rate      (1/day)
@@ -85,7 +86,7 @@
             DO k = nzb, nzt
                 CHL(k)    =  0.0
                 radpen(k) =  0.0
-                light(k)  =  exp(K1 * zu(k))
+                light(k)  =  exp(K1 * zw(k))
             END DO
 
             IF ( .NOT. dirunal_variation ) growth  =  growth / 2.0_wp
@@ -127,8 +128,8 @@
                     L_VIS = 0.42   ! ( I_VIS = I_0 * 0.42 W/m^2 )
                     K_VIS = 0.0434 ! ( 1/m ) 
                     
-                    radpen(k)  =  L_IR  * exp(zu(k) * K_IR) & 
-                               +  L_VIS * exp(zu(k) * K_VIS)  
+                    radpen(k)  =  L_IR  * exp(zw(k) * K_IR) & 
+                               +  L_VIS * exp(zw(k) * K_VIS)  
                 ELSE 
                 !< Self Shading Effect On    
 
@@ -152,9 +153,9 @@
                     L_B  =  L_VIS / 2.0 
                     K_B  =  0.0232 +  0.074 * CHL(k) ** 0.674
 
-                    radpen(k)  =  L_IR * exp(zu(k) * K_IR) &
-                               +  L_R  * exp(zu(k) * K_R)  & 
-                               +  L_B  * exp(zu(k) * K_B)  
+                    radpen(k)  =  L_IR * exp(zw(k) * K_IR) &
+                               +  L_R  * exp(zw(k) * K_R)  & 
+                                
                 END IF 
 
             END DO 
@@ -196,13 +197,14 @@
 
             !<Calculate the potential temperature tendency with radiation fluxes
             IF (k == nzt) THEN 
-                pt_tend  =  solar * (radpen(k) - radpen(k-1)) * ddzw(k)
-            ELSEIF (k == nzt) THEN 
-                pt_tend  =  solar * (radpen(k+1) - radpen(k)) * ddzw(k)
+                pt_tend  =  solar * radpen(k) * ddzw(k)
+            ELSEIF (k == nzb) THEN 
+                pt_tend  =  - solar * radpen(k-1) * ddzw(k)
             ELSE
-                pt_tend  =  solar * 0.5 * (radpen(k+1) - radpen(k-1)) * ddzw(k)
+                pt_tend  =  solar  * (radpen(k) - radpen(k-1)) * ddzw(k)
             ENDIF
                 
+
         END SUBROUTINE LPM_pt_tend
 
 !------------------------------------------------------------------------------!
