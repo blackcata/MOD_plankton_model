@@ -155,7 +155,7 @@
 
                     radpen(k)  =  L_IR * exp(zw(k) * K_IR) &
                                +  L_R  * exp(zw(k) * K_R)  & 
-                               +  L_B  * exp(zu(k) * K_B)
+                               +  L_B  * exp(zw(k) * K_B)
                                 
                 END IF 
 
@@ -186,7 +186,7 @@
                     heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)&
                                 - Q0_shift
 
-                    solar    =  (max(heating, cooling)+Q_cool_winter)            &
+                    solar    =  (max(heating, cooling)+Q0_cool_winter)            &
                              /  (cpw * rho_surface)
 
                 !<HEATING daily average +81 W/m2 (SUMMER)
@@ -194,7 +194,7 @@
                     cooling  =  - Q0_cool_summer
                     heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)
 
-                    solar    =  (max(heating, cooling)+Q_cool_summer)            &
+                    solar    =  (max(heating, cooling)+Q0_cool_summer)            &
                              /  (cpw * rho_surface)
                 END IF
 
