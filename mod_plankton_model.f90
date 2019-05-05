@@ -155,6 +155,7 @@
 
                     radpen(k)  =  L_IR * exp(zw(k) * K_IR) &
                                +  L_R  * exp(zw(k) * K_R)  & 
+                               +  L_B  * exp(zu(k) * K_B)
                                 
                 END IF 
 
