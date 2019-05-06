@@ -202,8 +202,13 @@
             ELSEIF (k == nzb) THEN 
                 pt_tend  =  - solar * radpen(k-1) * ddzw(k)
             ELSE
-                pt_tend  =  (solar + Q0_cool_winter)                            &
-                         *  (radpen(k) - radpen(k-1)) * ddzw(k)
+                IF ( simulated_time < time_season_change) THEN 
+                    pt_tend  =  (solar + Q0_cool_winter/(cpw * rho_surface))    &
+                             *  (radpen(k) - radpen(k-1)) * ddzw(k)
+                ELSE
+                    pt_tend  =  (solar + Q0_cool_summer/(cpw * rho_surface))    &
+                             *  (radpen(k) - radpen(k-1)) * ddzw(k)
+                END IF 
             ENDIF
                 
 
