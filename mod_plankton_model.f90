@@ -185,18 +185,12 @@
                     cooling  =  - Q0_cool_winter
                     heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)&
                                 - Q0_shift
-
-                    solar    =  (max(heating, cooling)+Q0_cool_winter)            &
-                             /  (cpw * rho_surface)
-
                 !<HEATING daily average +81 W/m2 (SUMMER)
                 ELSE
                     cooling  =  - Q0_cool_summer
                     heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)
-
-                    solar    =  (max(heating, cooling)+Q0_cool_summer)            &
-                             /  (cpw * rho_surface)
                 END IF
+                solar    =  max(heating, cooling) /  (cpw * rho_surface)
 
             ELSE 
                 solar  =  Q0_heat / (cpw * rho_surface)
@@ -208,7 +202,8 @@
             ELSEIF (k == nzb) THEN 
                 pt_tend  =  - solar * radpen(k-1) * ddzw(k)
             ELSE
-                pt_tend  =  solar  * (radpen(k) - radpen(k-1)) * ddzw(k)
+                pt_tend  =  (solar + Q0_cool_winter)                            &
+                         *  (radpen(k) - radpen(k-1)) * ddzw(k)
             ENDIF
                 
 
