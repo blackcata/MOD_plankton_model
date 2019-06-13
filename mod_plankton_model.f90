@@ -33,6 +33,8 @@
             IMPLICIT NONE
           
             LOGICAL     ::  nutrient_interaction, dirunal_variation
+            LOGICAL     ::  simple_penetration
+
             REAL(wp)    ::  cpw, Q0_heat, Q0_shift
             REAL(wp)    ::  Q0_cool_summer, Q0_cool_winter
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
@@ -62,6 +64,7 @@
             ALLOCATE( radpen(nzb:nzt) )
             ALLOCATE( CHL(nzb:nzt) )
 
+            simple_penetration    =  .FALSE.
             nutrient_interaction  =  .FALSE.
             dirunal_variation     =  .TRUE.
 
@@ -73,7 +76,6 @@
             Q0_shift        =  163    ! Surface buoyancy flux shift (W/m^2)
 
             time_season_change = 172800.0    ! The time when sesason changes 
-            !time_season_change = 0.0    ! The time when sesason changes 
             time_self_shading  = 180000000.0 ! The time when self shading active
             growth             =      1.0    ! Plankton max growth rate (1/day)
             death              =      0.1    ! Plankton death rate      (1/day)
@@ -123,13 +125,20 @@
                 K_IR = 2.86   !  ( 1/m )
                 
                 IF (simulated_time < time_self_shading ) THEN 
-                !< Self Shading Effect Off
-                    !<Visibile ray effect
-                    L_VIS = 0.42   ! ( I_VIS = I_0 * 0.42 W/m^2 )
-                    K_VIS = 0.0434 ! ( 1/m ) 
-                    
-                    radpen(k)  =  L_IR  * exp(zw(k) * K_IR) & 
-                               +  L_VIS * exp(zw(k) * K_VIS)  
+
+                    IF ( simple_penetration) THEN 
+                    !< Simple penetration without dividing visible & infrared ray
+                        radpen(k)  =  light(k)
+                    ELSE
+                    !< Self Shading Effect Off
+                        !<Visibile ray effect
+                        L_VIS = 0.42   ! ( I_VIS = I_0 * 0.42 W/m^2 )
+                        K_VIS = 0.0434 ! ( 1/m ) 
+                        
+                        radpen(k)  =  L_IR  * exp(zw(k) * K_IR)                 &
+                                   +  L_VIS * exp(zw(k) * K_VIS)  
+                    END IF 
+
                 ELSE 
                 !< Self Shading Effect On    
 
@@ -241,7 +250,7 @@
                     PHY_CONC  = 0.0
                 END IF
 
-                s_tend  =  ( -G1 * s(k,j,i) * light(k) + D1 ) * PHY_CONC
+                s_tend  =  ( -G1 * s(k,j,i) * radpen(k) + D1 ) * PHY_CONC
             ELSE
                 s_tend  =  0.0
             END IF
@@ -284,7 +293,7 @@
                 DO  n = start_index(nb), end_index(nb)
                 !<Phytosynthesis is only active when the radiation is available
                     IF (solar > 0.0) THEN 
-                        net_growth  =  G1 * s(kp,jp,ip) * light(kp) - D1
+                        net_growth  =  G1 * s(kp,jp,ip) * radpen(kp) - D1
                     ELSE 
                         net_growth  =  - D1
                     END IF 
