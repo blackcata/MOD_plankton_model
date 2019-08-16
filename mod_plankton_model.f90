@@ -40,7 +40,7 @@
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
             REAL(wp)    ::  time_season_change, time_self_shading
             REAL(wp)    ::  solar, pt_tend, s_tend
-            REAL(wp)    ::  alpha_ip
+            REAL(wp)    ::  alpha_ip, w2_thres
 
             REAL(wp),DIMENSION(:),ALLOCATABLE   :: radpen, light, CHL
           
@@ -71,6 +71,7 @@
             par_interpolation     =  .TRUE. 
 
             alpha_ip  =  0.01 ! Interpolation coefficient for vertical velocity 
+            w2_thres  =  5e-5 ! Threshold for vertical variance (w'2) (m^2/s^2)
             cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
 
             Q0_heat         =  400    ! Surface heating buoyancy flux (W/m^2)
@@ -285,6 +286,8 @@
              INTEGER(iwp), DIMENSION(0:7)  ::  end_index   !< start particle index for current sub-box
 
              REAL(wp)     :: net_growth !< parameters for plankton growth
+             REAL(wp)     :: w2_av, dw2_av !< mean vertical velocity varicance
+             REAL(wp)     :: dw_corr
 
              number_of_particles = prt_count(kp,jp,ip)
              particles => grid_particles(kp,jp,ip)%particles(1:number_of_particles)
@@ -304,6 +307,36 @@
                     IF (simulated_time > particle_advection_start) THEN 
                         particles(n)%radius=particles(n)%radius*               &
                                             (1.0 + dt_3d*net_growth)**(1.0/3.0)
+                    END IF
+                    
+                    IF (par_interpolation) THEN
+                        ! No inteprolation correction at bottom & top boundary
+                        IF ( kp > 80 .OR. kp < 10 ) dw_corr = 0.0                         
+                        
+                        ! Calculate mean vertical velocity variance at each depth
+                        w2_av   =  (hom(kp,1,32,0) + hom(kp-1,1,32,0))/2.0
+                        dw2_av  =  (hom(kp,1,32,0) - hom(kp-1,1,32,0))*ddzw(k)
+                        
+                        ! Vertical velocity interpolation correction
+                        IF (w2_av < w2_thres) THEN
+                            ! Pull back to original place 
+                            particles(n)%z  =  particles(n)%z                  &
+                                            -  particles(n)%speed_z * dt_3d
+                                            
+                            ! Vertical velocity correction with variance
+                            dw_corr  =  alpha * sqrt(abs(dw2_av))
+                            IF (particles(n)%speed_z < 0.0 .AND. dw2_av > 0.0) THEN
+                                particles(n)%speed_z  =  particles(n)%speed_z      * 
+                                                      +  dw_corr
+                            ELSEIF (particles(n)%speed_z > 0.0 .AND. dw2_av < 0.0) THEN
+                                particles(n)%speed_z  =  particles(n)%speed_z      &
+                                                      -  dw_corr
+                            END IF
+                            ! Update particle position with corrected vertical velocity
+                            particles(n)%z  =  particles(n)%z                  &
+                                            +  particles(n)%speed_z * dt_3d
+                            
+                        END IF                        
                     END IF
                     
                 ENDDO
