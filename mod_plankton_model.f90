@@ -33,13 +33,14 @@
             IMPLICIT NONE
           
             LOGICAL     ::  nutrient_interaction, dirunal_variation
-            LOGICAL     ::  simple_penetration
+            LOGICAL     ::  simple_penetration, par_interpolation
 
             REAL(wp)    ::  cpw, Q0_heat, Q0_shift
             REAL(wp)    ::  Q0_cool_summer, Q0_cool_winter
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
             REAL(wp)    ::  time_season_change, time_self_shading
             REAL(wp)    ::  solar, pt_tend, s_tend
+            REAL(wp)    ::  alpha_ip
 
             REAL(wp),DIMENSION(:),ALLOCATABLE   :: radpen, light, CHL
           
@@ -67,7 +68,9 @@
             simple_penetration    =  .FALSE.
             nutrient_interaction  =  .FALSE.
             dirunal_variation     =  .TRUE.
+            par_interpolation     =  .TRUE. 
 
+            alpha_ip  =  0.01 ! Interpolation coefficient for vertical velocity 
             cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
 
             Q0_heat         =  400    ! Surface heating buoyancy flux (W/m^2)
@@ -302,7 +305,7 @@
                         particles(n)%radius=particles(n)%radius*               &
                                             (1.0 + dt_3d*net_growth)**(1.0/3.0)
                     END IF
-
+                    
                 ENDDO
              ENDDO
 
