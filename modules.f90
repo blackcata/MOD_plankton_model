@@ -1658,3 +1658,69 @@
 
  END MODULE arrays_3d
 
+!------------------------------------------------------------------------------!
+! Description:
+! ------------
+!> Definition of statistical quantities, e.g. global sums.
+!------------------------------------------------------------------------------!
+ MODULE statistics
+
+    USE kinds
+
+    CHARACTER (LEN=40) ::  region(0:9)  !< label for statistic region
+ 
+    INTEGER(iwp) ::  pr_palm = 200          !< maximum number of output profiles
+    INTEGER(iwp) ::  statistic_regions = 0  !< identifier for statistic regions
+
+    INTEGER(iwp) ::  u_max_ijk(3) = -1  !< index values (i,j,k) of location where u_max occurs
+    INTEGER(iwp) ::  v_max_ijk(3) = -1  !< index values (i,j,k) of location where v_max occurs
+    INTEGER(iwp) ::  w_max_ijk(3) = -1  !< index values (i,j,k) of location where w_max occurs
+    
+    LOGICAL ::  flow_statistics_called = .FALSE.  !< flag that tells other routines if flow statistics was executed
+                                                  !< (after each timestep)
+    
+    REAL(wp) ::  u_max = 0.0_wp  !< maximum of absolute u-veloctiy in entire domain
+    REAL(wp) ::  v_max = 0.0_wp  !< maximum of absolute v-veloctiy in entire domain
+    REAL(wp) ::  w_max = 0.0_wp  !< maximum of absolute w-veloctiy in entire domain
+
+    REAL(wp), DIMENSION(2) ::  z_i  !< inversion height
+    
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  mean_surface_level_height  !< mean surface level height for the different statistic regions
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  sums_divnew_l              !< subdomain sum (_l) of divergence after pressure 
+                                                                       !< solver call (new)
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  sums_divold_l              !< subdomain sum (_l) of divergence before pressure
+                                                                       !< solver call (old)
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  weight_substep             !< weighting factor for substeps in timestepping
+    REAL(wp), DIMENSION(:), ALLOCATABLE ::  weight_pres                !< substep weighting factor for pressure solver
+    
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums             !< global sum array for the various output quantities
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wsts_bc_l   !< subdomain sum of sensible heat flux in Bott-Chlond scheme
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  ts_value         !< timeseries output array for the various output quantities
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wsus_ws_l   !< subdomain sum of vertical momentum flux w'u' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wsvs_ws_l   !< subdomain sum of vertical momentum flux w'v' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_us2_ws_l    !< subdomain sum of horizontal momentum flux u'u' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_vs2_ws_l    !< subdomain sum of horizontal momentum flux v'v' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_ws2_ws_l    !< subdomain sum of vertical momentum flux w'w' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wsncs_ws_l  !< subdomain sum of vertical clouddrop-number concentration flux w'nc' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wsnrs_ws_l  !< subdomain sum of vertical raindrop-number concentration flux w'nr' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wspts_ws_l  !< subdomain sum of vertical sensible heat flux w'pt' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wsqs_ws_l   !< subdomain sum of vertical latent heat flux w'q' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wsqcs_ws_l  !< subdomain sum of vertical cloudwater flux w'qc' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wsqrs_ws_l  !< subdomain sum of vertical rainwater flux w'qr' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wssas_ws_l  !< subdomain sum of vertical salinity flux w'sa' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_wsss_ws_l   !< subdomain sum of vertical passive scalar flux w's' (5th-order advection scheme only)
+    REAL(wp), DIMENSION(:,:), ALLOCATABLE ::  sums_ls_l        !< subdomain sum of large scale forcing and nudging tendencies
+                                              
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  hom_sum             !< sum array for horizontal mean
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  rmask               !< REAL flag array (0.0 or 1.0) for statistic regions
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  sums_l              !< subdomain sum (_l) gathered for various quantities
+    REAL(wp), DIMENSION(:,:,:), ALLOCATABLE ::  sums_l_l            !< subdomain sum (_l) of mixing length from diffusivities
+    
+    REAL(wp), DIMENSION(:,:,:,:), ALLOCATABLE ::  hom  !< horizontal mean of various quantities (profiles/timeseries)
+
+    SAVE
+
+ END MODULE statistics
+
+
+
