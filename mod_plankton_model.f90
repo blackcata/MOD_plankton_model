@@ -30,6 +30,9 @@
             USE control_parameters,                                            &
               ONLY: simulated_time, dt_3d, rho_surface
 
+            USE statistics,                                                    &
+              ONLY: hom 
+              
             IMPLICIT NONE
           
             LOGICAL     ::  nutrient_interaction, dirunal_variation
@@ -315,7 +318,7 @@
                         
                         ! Calculate mean vertical velocity variance at each depth
                         w2_av   =  (hom(kp,1,32,0) + hom(kp-1,1,32,0))/2.0
-                        dw2_av  =  (hom(kp,1,32,0) - hom(kp-1,1,32,0))*ddzw(k)
+                        dw2_av  =  (hom(kp,1,32,0) - hom(kp-1,1,32,0))*ddzw(kp)
                         
                         ! Vertical velocity interpolation correction
                         IF (w2_av < w2_thres) THEN
