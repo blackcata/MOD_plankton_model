@@ -326,16 +326,16 @@
                             ! Vertical velocity correction with variance
                             dw_corr  =  alpha * sqrt(abs(dw2_av))
                             IF (particles(n)%speed_z < 0.0 .AND. dw2_av > 0.0) THEN
-                                particles(n)%speed_z  =  particles(n)%speed_z      * 
+                                particles(n)%speed_z  =  particles(n)%speed_z  &   
                                                       +  dw_corr
                             ELSEIF (particles(n)%speed_z > 0.0 .AND. dw2_av < 0.0) THEN
-                                particles(n)%speed_z  =  particles(n)%speed_z      &
+                                particles(n)%speed_z  =  particles(n)%speed_z  &
                                                       -  dw_corr
                             END IF
+                            
                             ! Update particle position with corrected vertical velocity
                             particles(n)%z  =  particles(n)%z                  &
-                                            +  particles(n)%speed_z * dt_3d
-                            
+                                            +  particles(n)%speed_z * dt_3d                            
                         END IF                        
                     END IF
                     
