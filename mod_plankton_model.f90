@@ -45,7 +45,7 @@
             REAL(wp)    ::  solar, pt_tend, s_tend
             REAL(wp)    ::  alpha_ip, w2_thres
 
-            REAL(wp),DIMENSION(:),ALLOCATABLE   :: radpen, light, CHL
+            REAL(wp),DIMENSION(:),ALLOCATABLE   :: radpen, CHL
           
             SAVE
 
@@ -64,11 +64,10 @@
 
             INTEGER(iwp)  :: k 
 
-            ALLOCATE( light(nzb:nzt+1) )
             ALLOCATE( radpen(nzb:nzt) )
             ALLOCATE( CHL(nzb:nzt) )
 
-            simple_penetration    =  .FALSE.
+            simple_penetration    =  .TRUE.
             nutrient_interaction  =  .FALSE.
             dirunal_variation     =  .TRUE.
             par_interpolation     =  .TRUE. 
@@ -86,7 +85,7 @@
             time_self_shading  = 180000000.0 ! The time when self shading active
             growth             =      1.0    ! Plankton max growth rate (1/day)
             death              =      0.1    ! Plankton death rate      (1/day)
-            penetration_depth  =     10.0    ! Radiation penetration depth (m)
+            penetration_depth  =     5.0    ! Radiation penetration depth (m)
 
             G1  =  (growth / 86400.0) / 6.2e-5 ! Growth rate in seconds /(N0 or P0)
             D1  =  (death  / 86400.0)          ! Death rate in seconds
@@ -95,7 +94,6 @@
             DO k = nzb, nzt
                 CHL(k)    =  0.0
                 radpen(k) =  0.0
-                light(k)  =  exp(K1 * zw(k))
             END DO
 
             IF ( .NOT. dirunal_variation ) growth  =  growth / 2.0_wp
@@ -135,7 +133,7 @@
 
                     IF ( simple_penetration) THEN 
                     !< Simple penetration without dividing visible & infrared ray
-                        radpen(k)  =  light(k)
+                        radpen(k)  =  exp(K1 * zw(k))
                     ELSE
                     !< Self Shading Effect Off
                         !<Visibile ray effect
