@@ -130,9 +130,9 @@
                 L_IR = 0.58   !  ( I_IR = I_0 * 0.58  W/m^2) 
                 K_IR = 2.86   !  ( 1/m )
                 
-                IF (simulated_time < time_self_shading ) THEN 
+                IF (simulated_time < time_self_shading) THEN
 
-                    IF ( simple_penetration) THEN 
+                    IF (simple_penetration) THEN
                     !< Simple penetration without dividing visible & infrared ray
                         radpen(k)  =  exp(K1 * zw(k))
                     ELSE
@@ -194,9 +194,9 @@
             REAL(wp)        :: pi = 3.141592654_wp, cooling, heating
 
             !<Dirunal variation setup
-            IF ( dirunal_variation ) THEN 
+            IF (dirunal_variation) THEN
                 !<COOLING daily average -81 W/m2 (WINTER)
-                IF ( simulated_time < time_season_change ) THEN 
+                IF (simulated_time < time_season_change) THEN
                     cooling  =  - Q0_cool_winter
                     heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)&
                                 - Q0_shift
@@ -217,7 +217,7 @@
             ELSEIF (k == nzb) THEN 
                 pt_tend  =  - solar * radpen(k-1) * ddzw(k)
             ELSE
-                IF ( simulated_time < time_season_change) THEN 
+                IF (simulated_time < time_season_change) THEN
                     pt_tend  =  (solar + Q0_cool_winter/(cpw * rho_surface))    &
                              *  (radpen(k) - radpen(k-1)) * ddzw(k)
                 ELSE
@@ -244,7 +244,7 @@
             INTEGER(iwp)    :: i, j, k
             REAL(wp)        :: PHY_CONC, tot_vol, pi = 3.141592654_wp
             
-            IF ( nutrient_interaction ) THEN 
+            IF (nutrient_interaction) THEN
 
                 IF (simulated_time > particle_advection_start) THEN
                 !<Calculating the chlorophyll concentration
@@ -313,7 +313,7 @@
                     
                     IF (par_interpolation) THEN
                         ! No inteprolation correction at bottom & top boundary
-                        IF ( kp > 80 .OR. kp < 10 ) dw_corr = 0.0                         
+                        IF (kp > 80 .OR. kp < 10) dw_corr = 0.0
                         
                         ! Calculate mean vertical velocity variance at each depth
                         w2_av   =  (hom(kp,1,32,0) + hom(kp-1,1,32,0))/2.0
