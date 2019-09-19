@@ -38,7 +38,7 @@
             LOGICAL     ::  nutrient_interaction, dirunal_variation
             LOGICAL     ::  simple_penetration, par_interpolation
 
-            REAL(wp)    ::  cpw, Q0_heat, Q0_shift
+            REAL(wp)    ::  cpw, Q0_heat, Q0_shift, Q0_weight
             REAL(wp)    ::  Q0_cool_summer, Q0_cool_winter
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
             REAL(wp)    ::  time_season_change, time_self_shading
@@ -76,6 +76,7 @@
             w2_thres  =  5e-5 ! Threshold for vertical variance (w'2) (m^2/s^2)
             cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
 
+            Q0_weight       =  0.1    ! Weight of Surface buoyancy flux 
             Q0_heat         =  400    ! Surface heating buoyancy flux (W/m^2)
             Q0_cool_summer  =  100    ! Surface cooling buoyancy flux (W/m^2)
             Q0_cool_winter  =  263    ! Surface cooling buoyancy flux (W/m^2)
@@ -204,10 +205,10 @@
                     cooling  =  - Q0_cool_summer
                     heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)
                 END IF
-                solar    =  max(heating, cooling) /  (cpw * rho_surface)
+                solar  =  Q0_weight * max(heating, cooling) /  (cpw * rho_surface)
 
             ELSE 
-                solar  =  Q0_heat / (cpw * rho_surface)
+                solar  =  Q0_weight * Q0_heat / (cpw * rho_surface)
             END IF 
 
             !<Calculate the potential temperature tendency with radiation fluxes
