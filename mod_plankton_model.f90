@@ -24,6 +24,9 @@
               ONLY: grid_particles, number_of_particles, particles,            &
                     particle_advection_start, prt_count
 
+            USE lagrangian_particle_model_mod,                                 &
+              ONLY: interpolation_trilinear 
+
             USE arrays_3d,                                                     &
               ONLY:  s, ddzw, zw
 
@@ -32,6 +35,8 @@
 
             USE statistics,                                                    &
               ONLY: hom 
+
+          
               
             IMPLICIT NONE
           
@@ -296,13 +301,23 @@
              start_index = grid_particles(kp,jp,ip)%start_index
              end_index   = grid_particles(kp,jp,ip)%end_index
 
-             subbox_start  =  0
-             subbox_end    =  7 
+             IF (interpolation_trilinear) THEN 
+                 subbox_start  =  0
+                 subbox_end    =  7 
+             ELSE
+                 subbox_start  =  1
+                 subbox_end    =  1 
+             END IF 
              
              DO  nb = subbox_start,subbox_end
 
-                particle_start   =  start_index(nb)
-                particle_end     =  end_index(nb)
+                IF (interpolation_trilinear) THEN 
+                    particle_start   =  start_index(nb)
+                    particle_end     =  end_index(nb)
+                ELSE
+                    particle_start   =  1
+                    particle_end     =  number_of_particles
+                END IF
 
                 DO  n = particle_start, particle_end
                 !<Phytosynthesis is only active when the radiation is available
