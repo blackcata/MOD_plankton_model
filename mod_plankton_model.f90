@@ -36,14 +36,13 @@
             IMPLICIT NONE
           
             LOGICAL     ::  nutrient_interaction, dirunal_variation
-            LOGICAL     ::  simple_penetration, par_interpolation
+            LOGICAL     ::  simple_penetration
 
             REAL(wp)    ::  cpw, Q0_heat, Q0_shift, Q0_weight
             REAL(wp)    ::  Q0_cool_summer, Q0_cool_winter
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
             REAL(wp)    ::  time_season_change, time_self_shading
             REAL(wp)    ::  solar, pt_tend, s_tend
-            REAL(wp)    ::  alpha_ip, w2_thres
 
             REAL(wp),DIMENSION(:),ALLOCATABLE   :: radpen, CHL
           
@@ -70,10 +69,7 @@
             simple_penetration    =  .TRUE.
             nutrient_interaction  =  .FALSE.
             dirunal_variation     =  .TRUE.
-            par_interpolation     =  .TRUE. 
 
-            alpha_ip  =  0.01 ! Interpolation coefficient for vertical velocity 
-            w2_thres  =  5e-5 ! Threshold for vertical variance (w'2) (m^2/s^2)
             cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
 
             Q0_weight       =  0.1    ! Weight of Surface buoyancy flux 
@@ -86,7 +82,7 @@
             time_self_shading  = 180000000.0 ! The time when self shading active
             growth             =      1.0    ! Plankton max growth rate (1/day)
             death              =      0.1    ! Plankton death rate      (1/day)
-            penetration_depth  =     5.0    ! Radiation penetration depth (m)
+            penetration_depth  =     10.0    ! Radiation penetration depth (m)
 
             G1  =  (growth / 86400.0) / 6.2e-5 ! Growth rate in seconds /(N0 or P0)
             D1  =  (death  / 86400.0)          ! Death rate in seconds
@@ -277,19 +273,17 @@
           SUBROUTINE LPM_phy_tend(ip,jp,kp)
              IMPLICIT NONE
  
-             INTEGER(iwp) :: ip  !< index of particle grid box, x-direction
-             INTEGER(iwp) :: jp  !< index of particle grid box, y-direction
-             INTEGER(iwp) :: kp  !< index of particle grid box, z-direction
-             INTEGER(iwp) ::  n  !< particle index
-             INTEGER(iwp) ::  nb !< index of sub-box particles are sorted in
-             INTEGER(iwp) ::  pn !< the number of particles want to track
+             INTEGER(iwp) ::  ip  !< index of particle grid box, x-direction
+             INTEGER(iwp) ::  jp  !< index of particle grid box, y-direction
+             INTEGER(iwp) ::  kp  !< index of particle grid box, z-direction
+             INTEGER(iwp) ::  n   !< particle index
+             INTEGER(iwp) ::  nb  !< index of sub-box particles are sorted in
+             INTEGER(iwp) ::  pn  !< the number of particles want to track
 
              INTEGER(iwp), DIMENSION(0:7)  ::  start_index !< start particle index for current sub-box
              INTEGER(iwp), DIMENSION(0:7)  ::  end_index   !< start particle index for current sub-box
 
              REAL(wp)     :: net_growth !< parameters for plankton growth
-             REAL(wp)     :: w2_av, dw2_av !< mean vertical velocity varicance
-             REAL(wp)     :: dw_corr
 
              number_of_particles = prt_count(kp,jp,ip)
              particles => grid_particles(kp,jp,ip)%particles(1:number_of_particles)
@@ -309,36 +303,6 @@
                     IF (simulated_time > particle_advection_start) THEN 
                         particles(n)%radius=particles(n)%radius*               &
                                             (1.0 + dt_3d*net_growth)**(1.0/3.0)
-                    END IF
-                    
-                    IF (par_interpolation) THEN
-                        ! No inteprolation correction at bottom & top boundary
-                        IF (kp > 80 .OR. kp < 10) dw_corr = 0.0
-                        
-                        ! Calculate mean vertical velocity variance at each depth
-                        w2_av   =  (hom(kp,1,32,0) + hom(kp-1,1,32,0))/2.0
-                        dw2_av  =  (hom(kp,1,32,0) - hom(kp-1,1,32,0))*ddzw(kp)
-                        
-                        ! Vertical velocity interpolation correction
-                        IF (w2_av < w2_thres) THEN
-                            ! Pull back to original place 
-                            particles(n)%z  =  particles(n)%z                  &
-                                            -  particles(n)%speed_z * dt_3d
-                                            
-                            ! Vertical velocity correction with variance
-                            dw_corr  =  alpha_ip * sqrt(abs(dw2_av))
-                            IF (particles(n)%speed_z < 0.0 .AND. dw2_av > 0.0) THEN
-                                particles(n)%speed_z  =  particles(n)%speed_z  &   
-                                                      +  dw_corr
-                            ELSEIF (particles(n)%speed_z > 0.0 .AND. dw2_av < 0.0) THEN
-                                particles(n)%speed_z  =  particles(n)%speed_z  &
-                                                      -  dw_corr
-                            END IF
-                            
-                            ! Update particle position with corrected vertical velocity
-                            particles(n)%z  =  particles(n)%z                  &
-                                            +  particles(n)%speed_z * dt_3d                            
-                        END IF                        
                     END IF
                     
                 ENDDO
