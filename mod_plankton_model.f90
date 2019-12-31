@@ -72,7 +72,7 @@
 
             cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
 
-            Q0_weight       =  0.1    ! Weight of Surface buoyancy flux 
+            Q0_weight       =  1.0    ! Weight of Surface buoyancy flux 
             Q0_heat         =  400    ! Surface heating buoyancy flux (W/m^2)
             Q0_cool_summer  =  100    ! Surface cooling buoyancy flux (W/m^2)
             Q0_cool_winter  =  263    ! Surface cooling buoyancy flux (W/m^2)
@@ -280,6 +280,11 @@
              INTEGER(iwp) ::  nb  !< index of sub-box particles are sorted in
              INTEGER(iwp) ::  pn  !< the number of particles want to track
 
+             INTEGER(iwp) ::  subbox_start   !< start index for loop over subbox
+             INTEGER(iwp) ::  subbox_end     !< end index for loop over subboxes in particle advection 
+             INTEGER(iwp) ::  particle_start !< start index for particle loop
+             INTEGER(iwp) ::  particle_end   !< end index for particle loop
+
              INTEGER(iwp), DIMENSION(0:7)  ::  start_index !< start particle index for current sub-box
              INTEGER(iwp), DIMENSION(0:7)  ::  end_index   !< start particle index for current sub-box
 
@@ -291,8 +296,15 @@
              start_index = grid_particles(kp,jp,ip)%start_index
              end_index   = grid_particles(kp,jp,ip)%end_index
 
-             DO  nb = 0, 7
-                DO  n = start_index(nb), end_index(nb)
+             subbox_start  =  0
+             subbox_end    =  7 
+             
+             DO  nb = subbox_start,subbox_end
+
+                particle_start   =  start_index(nb)
+                particle_end     =  end_index(nb)
+
+                DO  n = particle_start, particle_end
                 !<Phytosynthesis is only active when the radiation is available
                     IF (solar > 0.0) THEN 
                         net_growth  =  G1 * s(kp,jp,ip) * radpen(kp) - D1
