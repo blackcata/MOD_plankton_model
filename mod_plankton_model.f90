@@ -36,8 +36,6 @@
             USE statistics,                                                    &
               ONLY: hom 
 
-          
-              
             IMPLICIT NONE
           
             LOGICAL     ::  nutrient_interaction, dirunal_variation
