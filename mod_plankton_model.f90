@@ -24,9 +24,6 @@
               ONLY: grid_particles, number_of_particles, particles,            &
                     particle_advection_start, prt_count
 
-            USE lagrangian_particle_model_mod,                                 &
-              ONLY: interpolation_trilinear 
-
             USE arrays_3d,                                                     &
               ONLY:  s, ddzw, zw
 
@@ -40,6 +37,7 @@
           
             LOGICAL     ::  nutrient_interaction, dirunal_variation
             LOGICAL     ::  simple_penetration
+            LOGICAL     ::  interpolation_trilinear
 
             REAL(wp)    ::  cpw, Q0_heat, Q0_shift, Q0_weight
             REAL(wp)    ::  Q0_cool_summer, Q0_cool_winter
@@ -69,14 +67,15 @@
             ALLOCATE( radpen(nzb:nzt) )
             ALLOCATE( CHL(nzb:nzt) )
 
-            simple_penetration    =  .TRUE.
-            nutrient_interaction  =  .FALSE.
-            dirunal_variation     =  .TRUE.
+            simple_penetration      =  .TRUE.
+            nutrient_interaction    =  .FALSE.
+            dirunal_variation       =  .TRUE.
+            interpolation_trilinear =  .FALSE.
 
             cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
 
             Q0_weight       =  1.0    ! Weight of Surface buoyancy flux 
-            Q0_heat         =  400    ! Surface heating buoyancy flux (W/m^2)
+            Q0_heat         =  570    ! Surface heating buoyancy flux (W/m^2)
             Q0_cool_summer  =  100    ! Surface cooling buoyancy flux (W/m^2)
             Q0_cool_winter  =  263    ! Surface cooling buoyancy flux (W/m^2)
             Q0_shift        =  163    ! Surface buoyancy flux shift (W/m^2)
@@ -197,34 +196,29 @@
                 !<COOLING daily average -81 W/m2 (WINTER)
                 IF (simulated_time < time_season_change) THEN
                     cooling  =  - Q0_cool_winter
-                    heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)&
-                                - Q0_shift
                 !<HEATING daily average +81 W/m2 (SUMMER)
                 ELSE
                     cooling  =  - Q0_cool_summer
-                    heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)
                 END IF
-                solar  =  Q0_weight * max(heating, cooling) /  (cpw * rho_surface)
+
+                heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)
+
+                solar    =  Q0_weight * max(heating, 0.0_wp) / (cpw*rho_surface)
+                cooling  =  cooling / (cpw*rho_surface) 
 
             ELSE 
-                solar  =  Q0_weight * Q0_heat / (cpw * rho_surface)
+                solar  =  Q0_weight * Q0_heat / (cpw*rho_surface)
             END IF 
 
             !<Calculate the potential temperature tendency with radiation fluxes
             IF (k == nzt) THEN 
-                pt_tend  =  solar * radpen(k) * ddzw(k)
+                pt_tend  =  (solar * (radpen(k)-radpen(k-1)) + cooling) * ddzw(k)
             ELSEIF (k == nzb) THEN 
                 pt_tend  =  - solar * radpen(k-1) * ddzw(k)
             ELSE
-                IF (simulated_time < time_season_change) THEN
-                    pt_tend  =  (solar + Q0_cool_winter/(cpw * rho_surface))    &
-                             *  (radpen(k) - radpen(k-1)) * ddzw(k)
-                ELSE
-                    pt_tend  =  (solar + Q0_cool_summer/(cpw * rho_surface))    &
-                             *  (radpen(k) - radpen(k-1)) * ddzw(k)
-                END IF 
+                pt_tend  =  solar * (radpen(k) - radpen(k-1)) * ddzw(k)
             ENDIF
-                
+            
 
         END SUBROUTINE LPM_pt_tend
 
@@ -326,11 +320,11 @@
                     END IF 
                     
                     IF (simulated_time > particle_advection_start) THEN 
-                        particles(n)%radius=particles(n)%radius*               &
-                                            (1.0 + dt_3d*net_growth)**(1.0/3.0)
+                        particles(n)%weight_factor=particles(n)%weight_factor*  &
+                                            (1.0 + dt_3d*net_growth)
                     END IF
-                    
                 ENDDO
+
              ENDDO
 
           END SUBROUTINE LPM_phy_tend
