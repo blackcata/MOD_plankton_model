@@ -75,7 +75,7 @@
             cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
 
             Q0_weight       =  1.0    ! Weight of Surface buoyancy flux 
-            Q0_heat         =  570    ! Surface heating buoyancy flux (W/m^2)
+            Q0_heat         =  400    ! Surface heating buoyancy flux (W/m^2)
             Q0_cool_summer  =  100    ! Surface cooling buoyancy flux (W/m^2)
             Q0_cool_winter  =  263    ! Surface cooling buoyancy flux (W/m^2)
             Q0_shift        =  163    ! Surface buoyancy flux shift (W/m^2)
@@ -196,28 +196,30 @@
                 !<COOLING daily average -81 W/m2 (WINTER)
                 IF (simulated_time < time_season_change) THEN
                     cooling  =  - Q0_cool_winter
+                    heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)&
+                                - Q0_shift
                 !<HEATING daily average +81 W/m2 (SUMMER)
                 ELSE
                     cooling  =  - Q0_cool_summer
+                    heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)
                 END IF
 
-                heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)
-
-                solar    =  Q0_weight * max(heating, 0.0_wp) / (cpw*rho_surface)
-                cooling  =  cooling / (cpw*rho_surface) 
-
+                solar  =  Q0_weight * max(heating, cooling) / (cpw*rho_surface)
             ELSE 
                 solar  =  Q0_weight * Q0_heat / (cpw*rho_surface)
             END IF 
 
             !<Calculate the potential temperature tendency with radiation fluxes
             IF (k == nzt) THEN 
-                pt_tend  =  (solar * (radpen(k)-radpen(k-1)) + cooling) * ddzw(k)
+                pt_tend  =  solar * radpen(k) * ddzw(k)
             ELSEIF (k == nzb) THEN 
                 pt_tend  =  - solar * radpen(k-1) * ddzw(k)
             ELSE
-                pt_tend  =  solar * (radpen(k) - radpen(k-1)) * ddzw(k)
-            ENDIF
+                IF (solar > 0.0_wp) THEN 
+                    pt_tend  =  heating / (cpw*rho_surface)                     &
+                                        * (radpen(k) - radpen(k-1)) * ddzw(k)
+                END IF
+            END IF
             
 
         END SUBROUTINE LPM_pt_tend
