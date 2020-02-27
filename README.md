@@ -1,7 +1,12 @@
 # Lagrangian Plankton Model 
-This module is purposed to attach the NP model to the PALM code. 
-This code is easily operated with the user codes in the PALM. 
-Following the below process will make each particle's trajectories at the specific folder. 
+This module is purposed to attach the NP Lagrangian particle model (Nutriend & Phytoplankton) to the PALM code, which is the turbulent resolving large eddy simulation(LES) code for the modern meteorological model system. 
+This code is integrated with the user codes, which is given by the PALM code. 
+
+Spring bloom is simulated and analyzed by the LPM code and submitted to the Journal of Geophysical Research : Oceans. 
+
+Title : The Route to Spring Phytoplankton Blooms by a Lagrangian Plankton Model (submitted)
+Listed co-author(s) :Kyung Min Noh, Yign Noh, Ashley Brereton, and Jong-Seong Kug
+Corresponding Author : Yign Noh 
 
 ### Install 
 1. Write USE plankton_model to user_init.f90, user_actionf90 and user_ user_lpm_advec.f90 file. 
