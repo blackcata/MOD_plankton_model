@@ -21,7 +21,7 @@ Ocean mixed layer structures are constructed with Goh & Noh (2013) conditions wi
 - Light penetration : Manniza et al. (2005)
 
 ### 2. Related papers
-- Related paper : 
+- Related paper : http://bit.ly/2uC0mWV
 - Related presentation : 
 
 ### 3. Simulation setting for phytoplankton 
