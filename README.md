@@ -16,7 +16,7 @@ Corresponding Author : Yign Noh
 
 ### 1. Tested fluid 
 Ocean mixed layer structures are constructed with Goh & Noh (2013) conditions with same heat flux settings. To reproduce the spring bloom, we used two different ocean condition: winter and spring condition, and the point when the ocean condition is changed is controlled by 'time_season_change' in LPM_setup. The Lagrangian plankton particles are well mixed up with deep convection by surface cooling at winter ocean condition.  
-- Langmuir circulation forcing : Noh et al., (2004)
+- Langmuir circulation forcing : Noh et al. (2004)
 - Ocean heat flux condition : Goh & Noh (2013) 
 - Light penetration : Manniza et al. (2005)
 
