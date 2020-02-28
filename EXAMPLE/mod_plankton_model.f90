@@ -25,18 +25,27 @@
                     particle_advection_start, prt_count
 
             USE arrays_3d,                                                     &
-              ONLY: zu, s
+              ONLY:  s, ddzw, zw
 
             USE control_parameters,                                            &
-              ONLY: simulated_time, dt_3d
+              ONLY: simulated_time, dt_3d, rho_surface
+
+            USE statistics,                                                    &
+              ONLY: hom 
 
             IMPLICIT NONE
           
+            LOGICAL     ::  nutrient_interaction, dirunal_variation
+            LOGICAL     ::  simple_penetration
+            LOGICAL     ::  interpolation_trilinear
+
+            REAL(wp)    ::  cpw, Q0_heat, Q0_shift, Q0_weight
+            REAL(wp)    ::  Q0_cool_summer, Q0_cool_winter
             REAL(wp)    ::  D1, G1, K1, growth, death, penetration_depth
             REAL(wp)    ::  time_season_change, time_self_shading
             REAL(wp)    ::  solar, pt_tend, s_tend
 
-            REAL(wp),DIMENSION(:),ALLOCATABLE   :: radpen, light, CHL
+            REAL(wp),DIMENSION(:),ALLOCATABLE   :: radpen, CHL
           
             SAVE
 
@@ -55,13 +64,25 @@
 
             INTEGER(iwp)  :: k 
 
-            ALLOCATE( light(nzb:nzt+1) )
             ALLOCATE( radpen(nzb:nzt) )
             ALLOCATE( CHL(nzb:nzt) )
 
+            simple_penetration      =  .TRUE.
+            nutrient_interaction    =  .FALSE.
+            dirunal_variation       =  .TRUE.
+            interpolation_trilinear =  .FALSE.
+
+            cpw  =  4218.0_wp ! Heat capacity of water at constant pressure (J/kg/K)
+
+            Q0_weight       =  1.0    ! Weight of Surface buoyancy flux 
+            Q0_heat         =  400    ! Surface heating buoyancy flux (W/m^2)
+            Q0_cool_summer  =  100    ! Surface cooling buoyancy flux (W/m^2)
+            Q0_cool_winter  =  263    ! Surface cooling buoyancy flux (W/m^2)
+            Q0_shift        =  163    ! Surface buoyancy flux shift (W/m^2)
+
             time_season_change = 172800.0    ! The time when sesason changes 
             time_self_shading  = 180000000.0 ! The time when self shading active
-            growth             =      2.0    ! Plankton max growth rate (1/day)
+            growth             =      1.0    ! Plankton max growth rate (1/day)
             death              =      0.1    ! Plankton death rate      (1/day)
             penetration_depth  =     10.0    ! Radiation penetration depth (m)
 
@@ -72,8 +93,9 @@
             DO k = nzb, nzt
                 CHL(k)    =  0.0
                 radpen(k) =  0.0
-                light(k)  =  exp(K1 * zu(k))
             END DO
+
+            IF ( .NOT. dirunal_variation ) growth  =  growth / 2.0_wp
 
         END SUBROUTINE LPM_setup
 
@@ -81,7 +103,7 @@
 !                                                                              !
 !   SUBROUTINE : LPM_irradiance                                                !
 !                                                                              !
-!   PURPOSE : Determine the irradiance of each ocena layer                     !
+!   PURPOSE : Determine the irradiance of each ocean layer                     !
 !             Radiation penetration is determined with phytoplankton           !
 !                                                                              !
 !   REFERENCE : Manniza et al., 2005 GRL                                       !
@@ -106,14 +128,21 @@
                 L_IR = 0.58   !  ( I_IR = I_0 * 0.58  W/m^2) 
                 K_IR = 2.86   !  ( 1/m )
                 
-                IF (simulated_time < time_self_shading ) THEN 
-                !< Self Shading Effect Off
-                    !<Visibile ray effect
-                    L_VIS = 0.42   ! ( I_VIS = I_0 * 0.42 W/m^2 )
-                    K_VIS = 0.0434 ! ( 1/m ) 
-                    
-                    radpen(k)  =  L_IR  * exp(zu(k) * K_IR) & 
-                               +  L_VIS * exp(zu(k) * K_VIS)  
+                IF (simulated_time < time_self_shading) THEN
+
+                    IF (simple_penetration) THEN
+                    !< Simple penetration without dividing visible & infrared ray
+                        radpen(k)  =  exp(K1 * zw(k))
+                    ELSE
+                    !< Self Shading Effect Off
+                        !<Visibile ray effect
+                        L_VIS = 0.42   ! ( I_VIS = I_0 * 0.42 W/m^2 )
+                        K_VIS = 0.0434 ! ( 1/m ) 
+                        
+                        radpen(k)  =  L_IR  * exp(zw(k) * K_IR)                 &
+                                   +  L_VIS * exp(zw(k) * K_VIS)  
+                    END IF 
+
                 ELSE 
                 !< Self Shading Effect On    
 
@@ -137,9 +166,10 @@
                     L_B  =  L_VIS / 2.0 
                     K_B  =  0.0232 +  0.074 * CHL(k) ** 0.674
 
-                    radpen(k)  =  L_IR * exp(zu(k) * K_IR) &
-                               +  L_R  * exp(zu(k) * K_R)  & 
-                               +  L_B  * exp(zu(k) * K_B)  
+                    radpen(k)  =  L_IR * exp(zw(k) * K_IR) &
+                               +  L_R  * exp(zw(k) * K_R)  & 
+                               +  L_B  * exp(zw(k) * K_B)
+                                
                 END IF 
 
             END DO 
@@ -159,28 +189,39 @@
             IMPLICIT NONE
 
             INTEGER(iwp)    :: k
-            REAL(wp)        :: pi = 3.141592654_wp
+            REAL(wp)        :: pi = 3.141592654_wp, cooling, heating
 
-            !<400W/m2 * max(0, sin(2 pi T) + 0.25)
-            solar = 0.96e-4_wp *                                               &
-                  max(0.0,sin(2.0_wp*pi*simulated_time/86400.0_wp) + 0.25_wp)
-
-            IF (k == nzt) THEN 
-                IF (simulated_time < time_season_change) THEN 
-                !<COOLING daily average 81 W/m2 (WINTER)
-                    pt_tend  =  - 0.63e-4_wp*radpen(k)                         &
-                                + solar * (radpen(k) - radpen(k-1))
+            !<Dirunal variation setup
+            IF (dirunal_variation) THEN
+                !<COOLING daily average -81 W/m2 (WINTER)
+                IF (simulated_time < time_season_change) THEN
+                    cooling  =  - Q0_cool_winter
+                    heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)&
+                                - Q0_shift
+                !<HEATING daily average +81 W/m2 (SUMMER)
                 ELSE
-                !<HEATING daily average 81 W/m2 (SUMMER)
-                    pt_tend  =  - 0.24e-4_wp*radpen(k)                         &
-                                + solar * (radpen(k) - radpen(k-1))
+                    cooling  =  - Q0_cool_summer
+                    heating  =  Q0_heat*sin(2.0_wp*pi*simulated_time/86400.0_wp)
                 END IF
-            ELSEIF (k == nzt) THEN 
-                pt_tend  =  solar * (radpen(k+1) - radpen(k))
+
+                solar  =  Q0_weight * max(heating, cooling) / (cpw*rho_surface)
+            ELSE 
+                solar  =  Q0_weight * Q0_heat / (cpw*rho_surface)
+            END IF 
+
+            !<Calculate the potential temperature tendency with radiation fluxes
+            IF (k == nzt) THEN 
+                pt_tend  =  solar * radpen(k) * ddzw(k)
+            ELSEIF (k == nzb) THEN 
+                pt_tend  =  - solar * radpen(k-1) * ddzw(k)
             ELSE
-                pt_tend  =  solar * 0.5 * (radpen(k+1) - radpen(k-1))
-            ENDIF
-                
+                IF (solar > 0.0_wp) THEN 
+                    pt_tend  =  heating / (cpw*rho_surface)                     &
+                                        * (radpen(k) - radpen(k-1)) * ddzw(k)
+                END IF
+            END IF
+            
+
         END SUBROUTINE LPM_pt_tend
 
 !------------------------------------------------------------------------------!
@@ -198,17 +239,23 @@
             INTEGER(iwp)    :: i, j, k
             REAL(wp)        :: PHY_CONC, tot_vol, pi = 3.141592654_wp
             
-            IF (simulated_time > particle_advection_start) THEN
-            !<Calculating the chlorophyll concentration
-                number_of_particles=prt_count(k,j,i)
-                particles => grid_particles(k,j,i)%particles(1:number_of_particles)
-                tot_vol   = SUM( (4.0/3.0)*pi*particles(1:number_of_particles)%radius**3.0 )
-                PHY_CONC  = tot_vol*1030.0
+            IF (nutrient_interaction) THEN
+
+                IF (simulated_time > particle_advection_start) THEN
+                !<Calculating the chlorophyll concentration
+                    number_of_particles=prt_count(k,j,i)
+                    particles => grid_particles(k,j,i)%particles(1:number_of_particles)
+                    tot_vol   = SUM( (4.0/3.0)*pi*particles(1:number_of_particles)%radius**3.0 )
+                    PHY_CONC  = tot_vol*1030.0
+                ELSE
+                    PHY_CONC  = 0.0
+                END IF
+
+                s_tend  =  ( -G1 * s(k,j,i) * radpen(k) + D1 ) * PHY_CONC
             ELSE
-                PHY_CONC  = 0.0
+                s_tend  =  0.0
             END IF
 
-            s_tend  =  ( -G1 * s(k,j,i) * light(k) + D1 ) * PHY_CONC
 
         END SUBROUTINE LPM_s_tend
 
@@ -225,12 +272,17 @@
           SUBROUTINE LPM_phy_tend(ip,jp,kp)
              IMPLICIT NONE
  
-             INTEGER(iwp) :: ip  !< index of particle grid box, x-direction
-             INTEGER(iwp) :: jp  !< index of particle grid box, y-direction
-             INTEGER(iwp) :: kp  !< index of particle grid box, z-direction
-             INTEGER(iwp) ::  n  !< particle index
-             INTEGER(iwp) ::  nb !< index of sub-box particles are sorted in
-             INTEGER(iwp) ::  pn !< the number of particles want to track
+             INTEGER(iwp) ::  ip  !< index of particle grid box, x-direction
+             INTEGER(iwp) ::  jp  !< index of particle grid box, y-direction
+             INTEGER(iwp) ::  kp  !< index of particle grid box, z-direction
+             INTEGER(iwp) ::  n   !< particle index
+             INTEGER(iwp) ::  nb  !< index of sub-box particles are sorted in
+             INTEGER(iwp) ::  pn  !< the number of particles want to track
+
+             INTEGER(iwp) ::  subbox_start   !< start index for loop over subbox
+             INTEGER(iwp) ::  subbox_end     !< end index for loop over subboxes in particle advection 
+             INTEGER(iwp) ::  particle_start !< start index for particle loop
+             INTEGER(iwp) ::  particle_end   !< end index for particle loop
 
              INTEGER(iwp), DIMENSION(0:7)  ::  start_index !< start particle index for current sub-box
              INTEGER(iwp), DIMENSION(0:7)  ::  end_index   !< start particle index for current sub-box
@@ -243,21 +295,38 @@
              start_index = grid_particles(kp,jp,ip)%start_index
              end_index   = grid_particles(kp,jp,ip)%end_index
 
-             DO  nb = 0, 7
-                DO  n = start_index(nb), end_index(nb)
+             IF (interpolation_trilinear) THEN 
+                 subbox_start  =  0
+                 subbox_end    =  7 
+             ELSE
+                 subbox_start  =  1
+                 subbox_end    =  1 
+             END IF 
+             
+             DO  nb = subbox_start,subbox_end
 
+                IF (interpolation_trilinear) THEN 
+                    particle_start   =  start_index(nb)
+                    particle_end     =  end_index(nb)
+                ELSE
+                    particle_start   =  1
+                    particle_end     =  number_of_particles
+                END IF
+
+                DO  n = particle_start, particle_end
+                !<Phytosynthesis is only active when the radiation is available
                     IF (solar > 0.0) THEN 
-                        net_growth  =  G1 * s(kp,jp,ip) * light(kp) - D1
+                        net_growth  =  G1 * s(kp,jp,ip) * radpen(kp) - D1
                     ELSE 
-                        net_growth  =  0.0
+                        net_growth  =  - D1
                     END IF 
                     
                     IF (simulated_time > particle_advection_start) THEN 
-                        particles(n)%radius=particles(n)%radius*               &
-                                            (1.0 + dt_3d*net_growth)**(1.0/3.0)
+                        particles(n)%weight_factor=particles(n)%weight_factor*  &
+                                            (1.0 + dt_3d*net_growth)
                     END IF
-
                 ENDDO
+
              ENDDO
 
           END SUBROUTINE LPM_phy_tend
