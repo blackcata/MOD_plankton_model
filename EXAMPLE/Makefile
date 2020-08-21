@@ -12,68 +12,127 @@
 # You should have received a copy of the GNU General Public License along with
 # PALM. If not, see <http://www.gnu.org/licenses/>.
 #
-# Copyright 1997-2018  Leibniz Universitaet Hannover
+# Copyright 1997-2020  Leibniz Universitaet Hannover
 #--------------------------------------------------------------------------------#
 #
 # WARNING: don't write filenames with extension .f90 in this header!!!!
 #
 # Current revisions:
 # ------------------
-# 
-# 
+#
+#
 # Former revisions:
 # -----------------
-# $Id: Makefile 4347 2019-12-18 13:18:33Z suehring $
-# add dependency to basic_constants_and_equations_mod for dynamics_mod
+# $Id: Makefile 4628 2020-07-29 07:23:03Z raasch $
+# dependencies for particle data MPI-I/O added
 # 
+# 4564 2020-06-12 14:03:36Z raasch
+# Vertical nesting method of Huq et al. (2019) removed
+# 
+# 4534 2020-05-14 18:35:22Z raasch
+# shared_memory_io_mod included and respective dependencies added
+# 
+# 4525 2020-05-10 17:05:07Z raasch
+# dependency for salsa_mod updated
+# 
+# 4522 2020-05-06 14:17:05Z suehring
+# routine user_init_flight renamed to user_init_flight_mod
+# 
+# 4518 2020-05-04 15:44:28Z suehring
+# Remove dependency of read_restart_data_mod on diagnostic_output_quantities_mod
+# 
+# 4517 2020-05-03 14:29:30Z raasch
+# dependencies for MPI-IO added
+# 
+# 4513 2020-04-30 13:45:47Z raasch
+# dependencies from chemistry modules updated
+# 
+# 4508 2020-04-24 13:32:20Z raasch
+# dependencies for salsa_mod updated
+# 
+# 4495 2020-04-13 20:11:20Z raasch
+# added routines and dependencies for restart data with MPI-IO
+# 
+# 4493 2020-04-10 09:49:43Z pavelkrc
+# cpu measures in advec_ws added
+#
+# 4458 2020-03-11 15:37:31Z raasch
+# bugfix for r4457: missing dependency added
+#
+# 4457 2020-03-11 14:20:43Z raasch
+# exchange horiz has been modularized and exchange horiz 2d has been merged, dependencies updated
+# accordingly
+#
+# 4453 2020-03-11 08:10:13Z raasch
+# dependencies for exchange horiz modified
+#
+# 4434 2020-03-03 10:02:18Z oliver.maas
+# Added output control for wind turbine model
+#
+# 4414 2020-02-19 20:16:04Z suehring
+# Move dependencies for init grid from advection scheme and multigrid solver
+# to module_interface
+#
+# 4411 2020-02-18 14:28:02Z maronga
+# Added output routines for WTM
+#
+# 4400 2020-02-10 20:32:41Z suehring
+# Add dependency for data-output module
+#
+# 4392 2020-01-31 16:14:57Z pavelkrc
+# add dependency on fft for transpose
+#
+# 4347 2019-12-18 13:18:33Z suehring
+# add dependency to basic_constants_and_equations_mod for dynamics_mod
+#
 # 4331 2019-12-10 18:25:02Z suehring
 # Move diagnostic surface output to diagnostic_output_quantities
-# 
+#
 # 4309 2019-11-26 18:49:59Z suehring
 # Add dependency to parallel random generator for synthetic turbulence generator
-# 
+#
 # 4286 2019-10-30 16:01:14Z resler
 # delete boundary_conds, added missing dependencies
-# 
+#
 # 4270 2019-10-23 10:46:20Z monakurppa
 # - Implement offline nesting for salsa and add dependency of nesting_offl_mod
 #   on salsa_mod
 #   set-up in which self-nesting is applied for the flow but the offline nesting
 #   for salsa
 # - Add dependency on basic_constants_and_equations_mod for salsa_mod
-# 
+#
 # 4258 2019-10-07 13:29:08Z suehring
 # Add dependency of land-surface model on pmc_handle_communicator and cpu_log
-# 
+#
 # 4245 2019-09-30 08:40:37Z pavelkrc
 # Remove no longer needed dependencies on surface_mod
-# 
+#
 # 4227 2019-09-10 18:04:34Z gronemeier
 # Add palm_date_time_mod, remove date_and_time_mod
 #
 # 4223 2019-09-10 09:20:47Z gronemeier
 # Corrected "Former revisions" section
-# 
+#
 # 4174 2019-08-20 12:41:13Z gronemeier
 # bugfix: add missing dependencies for vdi_internal_controls
-# 
+#
 # 4173 2019-08-20 12:04:06Z gronemeier
 # add vdi_internal_controls
-# 
+#
 # 4168 2019-08-16 13:50:17Z suehring
 # Remove some dependencies on surface_mod that are no longer required without
 # get_topography_top_index functions
-# 
+#
 # 4167 2019-08-16 11:01:48Z suehring
 # Remove no longer needed dependencies on surface_mod
-# 
+#
 # 4127 2019-07-30 14:47:10Z suehring
-# Add dependency of data_output_3d on plant_canopy_model_mod 
+# Add dependency of data_output_3d on plant_canopy_model_mod
 # (merge from branch resler)
 #
 # 4106 2019-07-19 08:54:42Z gronemeier
 # Remove dependency on pmc_interface for boundary_conds
-# 
+#
 # 4070 2019-07-03 13:51:40Z gronemeier
 # Add new data output modules
 #
@@ -172,8 +231,7 @@ SOURCES = \
 	disturb_field.f90 \
 	disturb_heatflux.f90 \
 	dynamics_mod.f90 \
-	exchange_horiz_2d.f90 \
-	exchange_horiz.f90 \
+	exchange_horiz_mod.f90 \
 	fft_xy_mod.f90 \
 	flow_statistics.f90 \
 	global_min_max.f90 \
@@ -226,6 +284,7 @@ SOURCES = \
 	poismg_mod.f90 \
 	poismg_noopt_mod.f90 \
 	posix_calls_from_fortran.f90 \
+	posix_interface_mod.f90 \
 	pres.f90 \
 	print_1d.f90 \
 	prognostic_equations.f90 \
@@ -235,8 +294,10 @@ SOURCES = \
 	random_gauss.f90 \
 	random_generator_parallel_mod.f90 \
 	read_restart_data_mod.f90 \
+	restart_data_mpi_io_mod.f90 \
 	run_control.f90 \
 	salsa_mod.f90 \
+	shared_memory_io_mod.f90 \
 	singleton_mod.f90 \
 	sor.f90 \
 	spectra_mod.f90 \
@@ -260,7 +321,7 @@ SOURCES = \
 	user_data_output_mask.f90 \
 	user_flight.f90\
 	user_init_3d_model.f90 \
-	user_init_flight.f90 \
+	user_init_flight_mod.f90 \
 	user_init_grid.f90 \
 	user_init_land_surface.f90 \
 	user_init_plant_canopy.f90 \
@@ -271,7 +332,6 @@ SOURCES = \
 	user_module.f90 \
 	user_spectra.f90 \
 	vdi_internal_controls.f90 \
-	vertical_nesting_mod.f90 \
 	virtual_flight_mod.f90 \
 	virtual_measurement_mod.f90 \
 	wind_turbine_model_mod.f90 \
@@ -333,6 +393,8 @@ advec_v_up.o: \
 	mod_kinds.o \
 	modules.o
 advec_ws.o: \
+	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o
 advec_w_pw.o: \
@@ -343,7 +405,7 @@ advec_w_up.o: \
 	modules.o
 average_3d_data.o: \
 	cpulog_mod.o \
-	exchange_horiz_2d.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	module_interface.o \
 	modules.o
@@ -355,7 +417,8 @@ biometeorology_mod.o: \
 	mod_kinds.o \
 	netcdf_data_input_mod.o \
 	palm_date_time_mod.o \
-	radiation_model_mod.o
+	radiation_model_mod.o \
+	restart_data_mpi_io_mod.o
 bulk_cloud_model_mod.o: \
 	basic_constants_and_equations_mod.o \
 	cpulog_mod.o \
@@ -364,8 +427,10 @@ bulk_cloud_model_mod.o: \
 	advec_s_pw.o \
 	advec_s_up.o \
 	diffusion_s.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o \
+	restart_data_mpi_io_mod.o \
 	surface_mod.o
 buoyancy.o: \
 	basic_constants_and_equations_mod.o \
@@ -385,8 +450,6 @@ check_open.o: \
 	posix_calls_from_fortran.o
 check_parameters.o: \
 	basic_constants_and_equations_mod.o \
-	chemistry_model_mod.o \
-	chem_emissions_mod.o \
 	init_vertical_profiles.o \
 	model_1d_mod.o \
 	module_interface.o \
@@ -395,8 +458,7 @@ check_parameters.o: \
 	netcdf_data_input_mod.o \
 	netcdf_interface_mod.o \
 	pmc_interface_mod.o \
-	subsidence_mod.o \
-	vertical_nesting_mod.o
+	subsidence_mod.o
 chem_emissions_mod.o: \
 	chem_gasphase_mod.o \
 	chem_modules.o \
@@ -412,11 +474,13 @@ chemistry_model_mod.o: \
 	chem_modules.o \
 	chem_photolysis_mod.o \
 	diffusion_s.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o \
 	netcdf_data_input_mod.o \
 	palm_date_time_mod.o \
 	radiation_model_mod.o \
+	restart_data_mpi_io_mod.o \
 	surface_mod.o
 chem_gasphase_mod.o: \
 	mod_kinds.o \
@@ -458,21 +522,22 @@ data_log.o: \
 	modules.o
 data_output_binary_module.o: \
 	mod_kinds.o
-data_output_module.o: \
-	data_output_binary_module.o \
-	data_output_netcdf4_module.o \
-	mod_kinds.o
 data_output_mask.o: \
 	basic_constants_and_equations_mod.o \
 	bulk_cloud_model_mod.o \
 	chemistry_model_mod.o \
 	cpulog_mod.o \
 	diagnostic_output_quantities_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	mod_particle_attributes.o \
 	modules.o \
 	netcdf_interface_mod.o \
 	salsa_mod.o
+data_output_module.o: \
+	data_output_binary_module.o \
+	data_output_netcdf4_module.o \
+	mod_kinds.o
 data_output_netcdf4_module.o: \
 	mod_kinds.o
 data_output_profiles.o: \
@@ -502,6 +567,7 @@ data_output_2d.o: \
 	basic_constants_and_equations_mod.o \
 	bulk_cloud_model_mod.o \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	land_surface_model_mod.o \
 	mod_kinds.o \
 	mod_particle_attributes.o \
@@ -514,6 +580,7 @@ data_output_3d.o: \
 	basic_constants_and_equations_mod.o \
 	bulk_cloud_model_mod.o \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	land_surface_model_mod.o \
 	mod_kinds.o \
 	mod_particle_attributes.o \
@@ -524,8 +591,10 @@ data_output_3d.o: \
 	radiation_model_mod.o \
 	urban_surface_mod.o
 diagnostic_output_quantities_mod.o: \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o \
+	restart_data_mpi_io_mod.o \
 	surface_layer_fluxes_mod.o
 diffusion_s.o: \
 	mod_kinds.o \
@@ -545,12 +614,14 @@ diffusion_w.o: \
 	surface_mod.o
 disturb_field.o: \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o \
 	random_function_mod.o \
 	random_generator_parallel_mod.o
 disturb_heatflux.o: \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o \
 	random_generator_parallel_mod.o \
@@ -558,18 +629,13 @@ disturb_heatflux.o: \
 dynamics_mod.o: \
 	basic_constants_and_equations_mod.o \
 	mod_kinds.o \
-        surface_mod.o \
-        pmc_interface_mod.o \
+	surface_mod.o \
+	pmc_interface_mod.o \
 	modules.o
-exchange_horiz.o: \
+exchange_horiz_mod.o: \
 	cpulog_mod.o \
 	mod_kinds.o \
 	modules.o
-exchange_horiz_2d.o: \
-	cpulog_mod.o \
-	mod_kinds.o \
-	modules.o \
-	pmc_interface_mod.o
 fft_xy_mod.o: \
 	cuda_fft_interfaces.o \
 	mod_kinds.o \
@@ -627,6 +693,7 @@ init_3d_model.o: \
 	advec_ws.o \
 	basic_constants_and_equations_mod.o \
 	bulk_cloud_model_mod.o \
+	chem_modules.o \
 	cpulog_mod.o \
 	disturb_heatflux.o \
 	large_scale_forcing_nudging_mod.o \
@@ -652,17 +719,13 @@ init_advec.o: \
 	modules.o
 init_coupling.o: \
 	mod_kinds.o \
-	modules.o \
-	vertical_nesting_mod.o
+	modules.o
 init_grid.o: \
-	advec_ws.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o \
 	netcdf_data_input_mod.o \
-	netcdf_interface_mod.o \
-	poismg_noopt_mod.o \
-	surface_mod.o \
-	vertical_nesting_mod.o
+	netcdf_interface_mod.o
 init_masks.o: \
 	bulk_cloud_model_mod.o \
 	mod_kinds.o \
@@ -674,13 +737,14 @@ init_pegrid.o: \
 	modules.o \
 	pmc_interface_mod.o \
 	spectra_mod.o \
-	synthetic_turbulence_generator_mod.o \
-	vertical_nesting_mod.o
+	synthetic_turbulence_generator_mod.o
 init_pt_anomaly.o: \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o
 init_rankine.o: \
 	basic_constants_and_equations_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o
 init_slope.o: \
@@ -693,6 +757,7 @@ init_vertical_profiles.o: \
 lagrangian_particle_model_mod.o: \
 	basic_constants_and_equations_mod.o \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	mod_particle_attributes.o \
 	modules.o \
@@ -701,6 +766,7 @@ lagrangian_particle_model_mod.o: \
 	netcdf_interface_mod.o \
 	random_function_mod.o \
 	random_generator_parallel_mod.o \
+	restart_data_mpi_io_mod.o \
 	surface_mod.o
 land_surface_model_mod.o: \
 	basic_constants_and_equations_mod.o \
@@ -722,8 +788,7 @@ large_scale_forcing_nudging_mod.o: \
 local_stop.o: \
 	mod_kinds.o \
 	modules.o \
-	pmc_interface_mod.o \
-	vertical_nesting_mod.o
+	pmc_interface_mod.o
 local_tremain.o: \
 	cpulog_mod.o \
 	mod_kinds.o \
@@ -747,6 +812,7 @@ module_interface.o: \
 	biometeorology_mod.o \
 	bulk_cloud_model_mod.o \
 	chemistry_model_mod.o \
+	data_output_module.o \
 	diagnostic_output_quantities_mod.o \
 	dynamics_mod.o \
 	gust_mod.o \
@@ -759,10 +825,12 @@ module_interface.o: \
 	nesting_offl_mod.o \
 	ocean_mod.o \
 	plant_canopy_model_mod.o \
+	poismg_noopt_mod.o \
 	radiation_model_mod.o \
 	salsa_mod.o \
 	spectra_mod.o \
 	surface_data_output_mod.o \
+	surface_mod.o \
 	synthetic_turbulence_generator_mod.o \
 	turbulence_closure_mod.o \
 	urban_surface_mod.o \
@@ -784,10 +852,20 @@ multi_agent_system_mod.o: \
 mod_kinds.o: \
 
 mod_particle_attributes.o: \
+	modules.o \
 	mod_kinds.o
+nesting_offl_mod.o: \
+	chem_modules.o \
+	cpulog_mod.o \
+	exchange_horiz_mod.o \
+	mod_kinds.o \
+	modules.o \
+	netcdf_data_input_mod.o \
+	salsa_mod.o
 netcdf_data_input_mod.o: \
 	chem_modules.o \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o   \
 	surface_mod.o
@@ -810,13 +888,6 @@ netcdf_interface_mod.o: \
 	turbulence_closure_mod.o \
 	urban_surface_mod.o \
 	user_module.o
-nesting_offl_mod.o: \
-	chem_modules.o \
-	cpulog_mod.o \
-	mod_kinds.o \
-	modules.o \
-	netcdf_data_input_mod.o \
-	salsa_mod.o 
 ocean_mod.o: \
 	advec_s_pw.o \
 	advec_s_up.o \
@@ -827,6 +898,7 @@ ocean_mod.o: \
 	mod_kinds.o \
 	modules.o \
 	pmc_interface_mod.o \
+	restart_data_mpi_io_mod.o \
 	surface_mod.o
 outflow_turbulence.o: \
 	cpulog_mod.o \
@@ -834,9 +906,9 @@ outflow_turbulence.o: \
 	modules.o
 palm.o: \
 	bulk_cloud_model_mod.o \
-	chem_photolysis_mod.o \
 	cpulog_mod.o \
 	diagnostic_output_quantities_mod.o \
+	exchange_horiz_mod.o \
 	land_surface_model_mod.o \
 	mod_kinds.o \
 	module_interface.o \
@@ -845,7 +917,7 @@ palm.o: \
 	netcdf_data_input_mod.o \
 	pmc_interface_mod.o \
 	pmc_particle_interface.o \
-	salsa_mod.o \
+	restart_data_mpi_io_mod.o \
 	surface_layer_fluxes_mod.o \
 	surface_data_output_mod.o \
 	time_to_string.o \
@@ -864,13 +936,14 @@ parin.o: \
 	pmc_interface_mod.o \
 	progress_bar_mod.o \
 	read_restart_data_mod.o \
-	turbulence_closure_mod.o \
-	vertical_nesting_mod.o
+	turbulence_closure_mod.o
 plant_canopy_model_mod.o: \
 	bulk_cloud_model_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o \
 	netcdf_data_input_mod.o \
+	restart_data_mpi_io_mod.o \
 	surface_mod.o
 pmc_particle_interface.o: \
 	mod_particle_attributes.o \
@@ -918,16 +991,21 @@ poisfft_mod.o: \
 	tridia_solver_mod.o
 poismg_mod.o: \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o
 poismg_noopt_mod.o: \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o
 posix_calls_from_fortran.o: \
 
+posix_interface_mod.o: \
+	mod_kinds.o
 pres.o: \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o \
 	pmc_interface_mod.o \
@@ -951,7 +1029,6 @@ prognostic_equations.o: \
 	advec_ws.o \
 	advec_w_up.o \
 	buoyancy.o \
-	chemistry_model_mod.o \
 	coriolis.o \
 	cpulog_mod.o \
 	cpulog_mod.o \
@@ -967,7 +1044,6 @@ prognostic_equations.o: \
 	ocean_mod.o \
 	plant_canopy_model_mod.o \
 	radiation_model_mod.o \
-	salsa_mod.o \
 	subsidence_mod.o \
 	surface_mod.o \
 	surface_mod.o \
@@ -979,11 +1055,13 @@ radiation_model_mod.o: \
 	basic_constants_and_equations_mod.o \
 	bulk_cloud_model_mod.o \
 	calc_mean_profile.o \
+	exchange_horiz_mod.o \
 	mod_particle_attributes.o \
 	modules.o \
 	netcdf_data_input_mod.o \
 	palm_date_time_mod.o \
 	plant_canopy_model_mod.o \
+	restart_data_mpi_io_mod.o \
 	surface_mod.o
 random_function_mod.o: \
 	mod_kinds.o
@@ -993,24 +1071,35 @@ random_gauss.o: \
 	random_generator_parallel_mod.o
 random_generator_parallel_mod.o: \
 	mod_kinds.o \
-	modules.o
+	modules.o \
+	posix_interface_mod.o
 read_restart_data_mod.o: \
+	bulk_cloud_model_mod.o \
 	chem_modules.o \
 	cpulog_mod.o \
-	diagnostic_output_quantities_mod.o \
+	gust_mod.o \
 	mod_kinds.o \
 	model_1d_mod.o \
 	module_interface.o \
 	modules.o \
+	mod_particle_attributes.o \
 	netcdf_interface_mod.o \
 	palm_date_time_mod.o \
 	radiation_model_mod.o \
 	random_function_mod.o\
 	random_generator_parallel_mod.o \
+	restart_data_mpi_io_mod.o \
 	spectra_mod.o \
 	surface_mod.o \
-	vertical_nesting_mod.o \
+	user_module.o \
 	virtual_measurement_mod.o
+restart_data_mpi_io_mod.o: \
+	exchange_horiz_mod.o \
+	modules.o \
+	mod_kinds.o \
+	mod_particle_attributes.o \
+	posix_interface_mod.o \
+	shared_memory_io_mod.o
 run_control.o: \
 	cpulog_mod.o \
 	mod_kinds.o \
@@ -1025,14 +1114,19 @@ salsa_mod.o: \
 	chem_gasphase_mod.o \
 	chem_modules.o \
 	diffusion_s.o \
+	exchange_horiz_mod.o \
 	netcdf_data_input_mod.o \
 	palm_date_time_mod.o \
 	plant_canopy_model_mod.o \
+	restart_data_mpi_io_mod.o \
 	surface_mod.o \
 	netcdf_data_input_mod.o
 singleton_mod.o: \
 	mod_kinds.o
+shared_memory_io_mod.o: \
+	modules.o
 sor.o: \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o
 spectra_mod.o: \
@@ -1063,7 +1157,7 @@ surface_layer_fluxes_mod.o: \
 	bulk_cloud_model_mod.o \
 	chem_gasphase_mod.o \
 	chem_modules.o \
-	exchange_horiz_2d.o \
+	exchange_horiz_mod.o \
 	land_surface_model_mod.o \
 	mod_kinds.o \
 	modules.o \
@@ -1074,21 +1168,25 @@ surface_mod.o: \
 	chem_modules.o \
 	model_1d_mod.o \
 	mod_kinds.o \
-	modules.o
+	modules.o \
+	restart_data_mpi_io_mod.o
 surface_data_output_mod.o: \
 	mod_kinds.o \
 	modules.o \
 	netcdf_data_input_mod.o \
 	netcdf_interface_mod.o \
+	restart_data_mpi_io_mod.o \
 	surface_mod.o
 synthetic_turbulence_generator_mod.o: \
 	basic_constants_and_equations_mod.o \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	modules.o \
 	nesting_offl_mod.o \
 	pmc_interface_mod.o \
 	random_generator_parallel_mod.o \
+	restart_data_mpi_io_mod.o \
 	surface_mod.o
 temperton_fft_mod.o: \
 	mod_kinds.o \
@@ -1100,13 +1198,13 @@ time_integration.o: \
 	buoyancy.o \
 	calc_mean_profile.o \
 	chem_emissions_mod.o \
-	chemistry_model_mod.o \
 	chem_gasphase_mod.o \
 	chem_modules.o \
 	cpulog_mod.o \
 	data_output_flight.o \
 	diagnostic_output_quantities_mod.o \
 	disturb_heatflux.o \
+	exchange_horiz_mod.o \
 	indoor_model_mod.o \
 	lagrangian_particle_model_mod.o \
 	land_surface_model_mod.o \
@@ -1130,13 +1228,14 @@ time_integration.o: \
 	time_to_string.o \
 	turbulence_closure_mod.o\
 	urban_surface_mod.o \
-	vertical_nesting_mod.o \
 	virtual_flight_mod.o \
-	virtual_measurement_mod.o
+	virtual_measurement_mod.o \
+	wind_turbine_model_mod.o
 time_integration_spinup.o: \
 	basic_constants_and_equations_mod.o \
 	cpulog_mod.o \
 	diagnostic_output_quantities_mod.o \
+	exchange_horiz_mod.o \
 	land_surface_model_mod.o \
 	mod_kinds.o \
 	modules.o \
@@ -1153,13 +1252,13 @@ timestep.o: \
 	cpulog_mod.o \
 	mod_kinds.o \
 	modules.o \
-	pmc_interface_mod.o \
-	vertical_nesting_mod.o
+	pmc_interface_mod.o
 timestep_scheme_steering.o: \
 	mod_kinds.o \
 	modules.o
 transpose.o: \
 	cpulog_mod.o \
+	fft_xy_mod.o \
 	mod_kinds.o \
 	modules.o
 tridia_solver_mod.o: \
@@ -1174,6 +1273,7 @@ turbulence_closure_mod.o: \
 	basic_constants_and_equations_mod.o \
 	bulk_cloud_model_mod.o \
 	cpulog_mod.o \
+	exchange_horiz_mod.o \
 	mod_kinds.o \
 	mod_particle_attributes.o \
 	modules.o \
@@ -1189,6 +1289,7 @@ urban_surface_mod.o: \
 	netcdf_data_input_mod.o \
 	palm_date_time_mod.o \
 	radiation_model_mod.o \
+	restart_data_mpi_io_mod.o \
 	surface_mod.o
 user_data_output_mask.o: \
 	mod_kinds.o \
@@ -1203,7 +1304,7 @@ user_init_3d_model.o: \
 	modules.o \
 	surface_mod.o \
 	user_module.o
-user_init_flight.o: \
+user_init_flight_mod.o: \
 	mod_kinds.o \
 	modules.o \
 	netcdf_interface_mod.o \
@@ -1256,11 +1357,6 @@ vdi_internal_controls.o: \
 	mod_kinds.o \
 	modules.o \
 	pmc_interface_mod.o
-vertical_nesting_mod.o: \
-	mod_kinds.o \
-	modules.o \
-	surface_mod.o \
-	turbulence_closure_mod.o
 virtual_flight_mod.o: \
 	basic_constants_and_equations_mod.o \
 	bulk_cloud_model_mod.o \
@@ -1268,38 +1364,51 @@ virtual_flight_mod.o: \
 	mod_kinds.o \
 	modules.o \
 	netcdf_interface_mod.o \
+	restart_data_mpi_io_mod.o \
 	user_flight.o \
-	user_init_flight.o
+	user_init_flight_mod.o
 virtual_measurement_mod.o: \
+	basic_constants_and_equations_mod.o \
 	cpulog_mod.o \
 	chem_modules.o \
 	chem_gasphase_mod.o \
+	data_output_module.o \
+	land_surface_model_mod.o \
 	mod_kinds.o \
 	modules.o \
 	netcdf_data_input_mod.o \
-	netcdf_interface_mod.o \
-	radiation_model_mod.o
+	radiation_model_mod.o \
+	surface_mod.o \
+	urban_surface_mod.o
 wind_turbine_model_mod.o: \
 	basic_constants_and_equations_mod.o \
 	cpulog_mod.o \
+	data_output_module.o \
+	exchange_horiz_mod.o \
+	netcdf_data_input_mod.o \
 	mod_kinds.o \
-	modules.o
+	modules.o \
+	restart_data_mpi_io_mod.o
 wrd_write_string.o: \
 	mod_kinds.o
 write_restart_data_mod.o: \
+	bulk_cloud_model_mod.o \
+	gust_mod.o \
 	mod_kinds.o \
 	model_1d_mod.o \
 	module_interface.o \
 	modules.o \
+	mod_particle_attributes.o \
 	netcdf_interface_mod.o \
 	palm_date_time_mod.o \
 	radiation_model_mod.o \
 	random_function_mod.o \
 	random_generator_parallel_mod.o \
+	restart_data_mpi_io_mod.o \
 	spectra_mod.o \
 	surface_mod.o \
-	vertical_nesting_mod.o \
-	virtual_measurement_mod.o
+	user_module.o \
+	virtual_measurement_mod.o 
 mod_plankton_model.o: \
 	mod_kinds.o \
 	mod_particle_attributes.o \

@@ -86,6 +86,8 @@
             death              =      0.1    ! Plankton death rate      (1/day)
             penetration_depth  =     10.0    ! Radiation penetration depth (m)
 
+            IF ( dirunal_variation ) growth  =  growth * 2.0_wp
+
             G1  =  (growth / 86400.0) / 6.2e-5 ! Growth rate in seconds /(N0 or P0)
             D1  =  (death  / 86400.0)          ! Death rate in seconds
             K1  =  (1.0 / penetration_depth)   ! Light attenuation (1/m) 
@@ -95,7 +97,6 @@
                 radpen(k) =  0.0
             END DO
 
-            IF ( .NOT. dirunal_variation ) growth  =  growth / 2.0_wp
 
         END SUBROUTINE LPM_setup
 
