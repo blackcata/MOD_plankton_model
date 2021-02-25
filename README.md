@@ -6,7 +6,7 @@ Spring bloom mechanism is firstly suggested by Svedrup (1953), describing as the
 
 We also used the LES model with Lagrangian particle concept to simulate idealized and realistic ocean condition with Lagrangian approach. This code is based on the NP model (Nutrient and Phyotoplankton), which simulated the phytoplankton particle growth by light and nutrient supply. This code includes four different part: light penetration, temperature & nutrient interaction and phytoplankton particle growth. You can choose options of LPM model in LPM_setup subroutine: penetration scheme, nutrient interaction, and dirunal varation. Light penetration scheme is based on the Manniza scheme (2005), which is widely used for the light penetration and heating by chlorophyll-a concentration in many earth system models (ESM).
 
-Spring bloom is simulated and analyzed by the LPM code and submitted to the Journal of Geophysical Research : Oceans. 
+Spring bloom is simulated and analyzed by the LPM code and published to the Journal of Geophysical Research : Oceans. 
 
 ### Title : The Route to Spring Phytoplankton Blooms by a Lagrangian Plankton Model
 
@@ -22,7 +22,7 @@ Ocean mixed layer structures are constructed with Goh & Noh (2013) conditions wi
 
 ### 2. Related papers
 - Related paper : http://bit.ly/2uC0mWV
-- Related presentation : 
+- Related presentation : https://bit.ly/37NfUHF
 
 ### 3. Simulation setting for phytoplankton 
 To compare the simulation results with other papers, phytoplankton growth & death setting is from Taylor & Ferrari (2011), which simulated the spring bloom with large eddy simulation but Eulerian approach. 
